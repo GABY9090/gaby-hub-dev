@@ -1,0 +1,13 @@
+<!-- Modèle d'email Supabase (Authentication > Emails > Templates)
+     À coller dans « Magic Link » ET dans « Confirm signup ».
+     Objet conseillé : Ton code d'accès GabyCodeHub : {{ .Token }} -->
+<div style="background:#07051a;padding:32px 16px;font-family:Arial,Helvetica,sans-serif">
+  <div style="max-width:480px;margin:0 auto;background:#110c33;border:2px solid #8b5cff;border-radius:16px;padding:28px;color:#e9e7ff">
+    <h1 style="margin:0 0 6px;font-size:22px;color:#ffffff">🔒 Gaby<span style="color:#22f0ff">CodeHub</span></h1>
+    <p style="margin:0 0 20px;color:#9b97c9;font-size:14px">Ton code d'accès est prêt.</p>
+    <p style="font-size:15px;margin:0 0 10px">Entre ce code sur Gaby Hub Dev pour débloquer le code des jeux :</p>
+    <div style="font-family:'Courier New',monospace;font-size:34px;letter-spacing:8px;font-weight:bold;color:#39ff88;background:#050414;border:1px solid #39ff88;border-radius:12px;padding:16px;text-align:center;margin:0 0 20px">{{ .Token }}</div>
+    <p style="font-size:13px;color:#9b97c9;margin:0">Ce code expire bientôt et ne sert qu'une fois. Si tu n'as rien demandé, ignore simplement cet email.</p>
+    <p style="font-size:13px;color:#9b97c9;margin:18px 0 0">— Gaby · Gaby Hub Dev 🎮</p>
+  </div>
+</div>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mentions légales & confidentialité · Gaby Hub Dev</title>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:radial-gradient(ellipse at top,#1a0f4a 0%,#07051a 55%);color:#e9e7ff;font-family:'Space Grotesk',sans-serif;line-height:1.7}
+.wrap{max-width:820px;margin:0 auto;padding:40px 22px 80px}
+a{color:#22f0ff}
+h1{font-family:'Bungee',sans-serif;font-size:30px;margin:0 0 6px}
+h2{font-family:'Bungee',sans-serif;font-size:17px;color:#ff2ee6;margin:34px 0 8px;letter-spacing:1px}
+p,li{color:#c9c6ee}
+.box{background:rgba(18,14,52,.74);border:1px solid rgba(139,92,255,.35);border-radius:16px;padding:18px 22px}
+.todo{color:#ffe14d}
+code{font-family:'JetBrains Mono',monospace;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p><a href="index.html">← Retour au site</a></p>
+  <h1>Mentions légales</h1>
+  <p>& politique de confidentialité</p>
+
+  <h2>// ÉDITEUR DU SITE</h2>
+  <div class="box">
+    <p>Ange Gabriel Gasimba Ntwali — Entrepreneur individuel (EI)<br>
+    Activité : programmation informatique<br>
+    SIREN : 941 383 333<br>
+    Adresse : <span class="todo">[À COMPLÉTER — adresse de l'entreprise ou de domiciliation]</span><br>
+    Contact : via le formulaire de la page <a href="index.html#contact">Contact</a><br>
+    Directeur de la publication : Ange Gabriel Gasimba Ntwali</p>
+  </div>
+
+  <h2>// HÉBERGEMENT</h2>
+  <div class="box">
+    <p>Site hébergé par <b>GitHub Pages</b> — GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis.<br>
+    Données (statistiques, comptes, messages) stockées chez <b>Supabase</b> (Supabase, Inc.), dans la région choisie pour le projet.<br>
+    Emails envoyés via <b>Brevo</b> (Sendinblue SAS, France).</p>
+  </div>
+
+  <h2>// DONNÉES COLLECTÉES</h2>
+  <div class="box">
+    <ul>
+      <li><b>Statistiques de visite</b> (seulement si tu acceptes le bandeau) : pages vues, durée de la visite, type de navigateur, langue, taille d'écran, site d'où tu viens, jeux joués, durée et score des parties. Un identifiant anonyme est rangé dans ton navigateur (localStorage). <b>Aucune adresse IP n'est enregistrée</b> par le site, aucune publicité, aucune revente.</li>
+      <li><b>GabyCodeHub</b> : ton email et ton pseudo, pour t'envoyer un code d'accès et te donner accès au code des jeux.</li>
+      <li><b>Formulaire de contact</b> : ton nom, ton email et ton message, pour te répondre.</li>
+    </ul>
+    <p>Durée de conservation : 13 mois maximum pour les statistiques ; jusqu'à suppression de ton compte pour GabyCodeHub ; le temps de traiter ta demande pour les messages.</p>
+    <p>Tes droits : accès, rectification, suppression, opposition. Pour les exercer, écris via la page <a href="index.html#contact">Contact</a>. Tu peux aussi saisir la CNIL (<a href="https://www.cnil.fr">cnil.fr</a>).</p>
+    <p>Changer d'avis sur les statistiques : <a href="#" id="reset">cliquer ici</a> pour réafficher le bandeau.</p>
+  </div>
+
+  <h2>// PROPRIÉTÉ INTELLECTUELLE</h2>
+  <div class="box"><p>Les contenus du site (textes, images, code des jeux) appartiennent à leur auteur, sauf mention contraire. Toute reproduction sans autorisation est interdite.</p></div>
+</div>
+<script>
+document.getElementById('reset').onclick=e=>{e.preventDefault();try{localStorage.removeItem('gh-consent')}catch(x){}location.href='index.html'};
+</script>
+</body>
+</html>
