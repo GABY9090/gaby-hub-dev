@@ -78,37 +78,34 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', banner); else banner();
 
   /* ---- Multijoueur temps réel (Supabase Realtime) ----
-     Renvoie un objet compatible avec le jeu : peers(), presence(state), leave(). */
-  async function joinRoom(name, me) {
+     Un salon = un canal. Présence = qui est dans le salon (pseudo, créateur, phase).
+     Broadcast = événements de jeu ('st' état du serpent, 'start' lancement, 'ctl' contrôle). */
+  async function joinRoom(name, state) {
     if (!sb) throw { code: 'non_configure' };
     const myId = uuid();
-    const remote = new Map();
-    let present = [];
+    const handlers = {}, syncFns = [];
     const ch = sb.channel(name, { config: { broadcast: { self: false }, presence: { key: myId } } });
-    ch.on('broadcast', { event: 'st' }, ({ payload }) => {
-      if (!payload || typeof payload.id !== 'string' || payload.id === myId) return;
-      remote.set(payload.id, Object.assign({}, payload, { _t: Date.now() }));
-    });
-    ch.on('presence', { event: 'sync' }, () => { present = Object.keys(ch.presenceState()); });
+    ['st', 'start', 'ctl'].forEach(ev => ch.on('broadcast', { event: ev }, ({ payload }) => {
+      (handlers[ev] || []).forEach(f => { try { f(payload); } catch (e) {} });
+    }));
+    ch.on('presence', { event: 'sync' }, () => syncFns.forEach(f => { try { f(); } catch (e) {} }));
     await new Promise((resolve, reject) => {
       const to = setTimeout(() => reject({ code: 'timeout' }), 10000);
       ch.subscribe(async status => {
-        if (status === 'SUBSCRIBED') { clearTimeout(to); try { await ch.track({ n: me.nick, c: me.color }); } catch (e) {} resolve(); }
+        if (status === 'SUBSCRIBED') { clearTimeout(to); try { await ch.track(state || {}); } catch (e) {} resolve(); }
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') { clearTimeout(to); reject({ code: status }); }
       });
     });
     return {
       myId,
-      peers() {
-        const now = Date.now();
-        const list = [{ peer: myId, sameTab: true, presence: {} }];
-        remote.forEach((r, id) => {
-          if (now - r._t > 4000 || (present.length && !present.includes(id))) { if (now - r._t > 4000) remote.delete(id); return; }
-          list.push({ peer: id, sameTab: false, presence: r });
-        });
-        return list;
+      members() {
+        const st = ch.presenceState();
+        return Object.keys(st).map(k => Object.assign({}, (st[k] && st[k][0]) || {}, { id: k }));
       },
-      presence(state) { return ch.send({ type: 'broadcast', event: 'st', payload: Object.assign({ id: myId }, state) }); },
+      track(s) { return ch.track(s); },
+      on(ev, f) { (handlers[ev] = handlers[ev] || []).push(f); },
+      onSync(f) { syncFns.push(f); },
+      send(ev, payload) { return ch.send({ type: 'broadcast', event: ev, payload: Object.assign({}, payload, { id: myId }) }); },
       leave() { return sb.removeChannel(ch); }
     };
   }

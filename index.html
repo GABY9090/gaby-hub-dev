@@ -213,7 +213,12 @@ h2.sec .hl{background:linear-gradient(90deg,var(--pink),var(--violet));-webkit-b
  80%{border-color:#ffe14d;box-shadow:0 0 34px rgba(255,225,77,.5)}
  100%{border-color:#39ff88;box-shadow:0 0 34px rgba(57,255,136,.5)}}
 .screen.flash{border-color:#fff!important;box-shadow:0 0 60px #fff!important}
-.screen canvas{max-width:100%;border-radius:10px;touch-action:none}
+.screen canvas{width:min(560px,100%);height:auto;aspect-ratio:1;border-radius:12px;touch-action:none;box-shadow:0 0 0 1px rgba(255,255,255,.06),0 0 40px rgba(139,92,255,.25)}
+#onLobby .lobbyhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:12px;color:var(--muted)}
+#onLobby .lobbyhead b{font-family:var(--title);font-size:24px;letter-spacing:3px;color:var(--cyan);text-shadow:0 0 12px var(--cyan)}
+.flabel{font-size:12px;color:var(--muted);margin-bottom:6px}
+#speedNote{font-size:11px;color:var(--muted);min-height:14px;margin-top:-6px}
+.modes button:disabled{opacity:.45}
 .hud{font-family:var(--mono);font-size:14px}
 .hud .score{font-family:var(--title);font-size:40px;color:var(--green);text-shadow:0 0 16px var(--green);line-height:1.2}
 .hud p{color:var(--muted);line-height:1.6;margin:10px 0;font-size:13px}
@@ -494,7 +499,7 @@ body.upside{transform:rotate(180deg);transition:transform 1s}
   <div class="arcade">
     <div class="screen" id="screen">
       <div class="game on" id="g-snake">
-        <canvas id="snake" width="420" height="420"></canvas>
+        <canvas id="snake" width="560" height="560"></canvas>
         <div class="touchpad"><span></span><button data-d="up">▲</button><span></span><button data-d="left">◀</button><button data-d="down">▼</button><button data-d="right">▶</button></div>
       </div>
       <div class="game" id="g-word">
@@ -518,15 +523,33 @@ body.upside{transform:rotate(180deg);transition:transform 1s}
         <button data-m="duo">👥 Duo local</button>
         <button data-m="online">🌐 En ligne</button>
       </div>
+      <div class="flabel">VITESSE</div>
+      <div class="modes" id="snakeSpeed">
+        <button data-sp="lent">🐢 Lent</button>
+        <button data-sp="normal">🙂 Normal</button>
+        <button data-sp="rapide">⚡ Rapide</button>
+        <button data-sp="turbo">🔥 Turbo</button>
+      </div>
+      <div id="speedNote"></div>
       <div class="online" id="onlineBox">
-        <input class="f" id="nick" maxlength="14" placeholder="Ton pseudo">
-        <div class="row" style="margin-top:0">
-          <button class="btn sm magnet" id="createRoom">➕ Créer</button>
-          <input class="f" id="roomCode" maxlength="8" placeholder="CODE" style="flex:1;width:auto;margin:0;text-transform:uppercase">
-          <button class="btn alt sm magnet" id="joinRoom">Rejoindre</button>
+        <div id="onStep1">
+          <div class="flabel">1. TON PSEUDO (obligatoire)</div>
+          <input class="f" id="nick" maxlength="14" placeholder="Ex. Gaby">
+          <div class="flabel" style="margin-top:4px">2. CRÉE UN SALON…</div>
+          <button class="btn sm magnet" id="createRoom" style="width:100%;justify-content:center">➕ Créer un salon</button>
+          <div class="flabel" style="margin-top:12px">… OU REJOINS CELUI D'UN AMI</div>
+          <div class="row" style="margin-top:0">
+            <input class="f" id="roomCode" maxlength="8" placeholder="CODE" style="flex:1;width:auto;margin:0;text-transform:uppercase">
+            <button class="btn alt sm magnet" id="joinRoom">Rejoindre</button>
+          </div>
+        </div>
+        <div id="onLobby" style="display:none">
+          <div class="lobbyhead"><span>CODE DU SALON</span><b id="lobbyCode"></b><button class="btn alt sm" id="copyCode" type="button">📋</button></div>
+          <ul class="plist" id="plist"></ul>
+          <div class="status" id="lobbyStatus"></div>
+          <div class="row"><button class="btn sm magnet" id="startRound">▶ Lancer la partie</button><button class="btn alt sm magnet" id="leaveLobby">🚪 Quitter</button></div>
         </div>
         <div class="status" id="netStatus"></div>
-        <ul class="plist" id="plist"></ul>
       </div>
       <p id="howto"></p>
       <div id="wordExtra" style="display:none">
@@ -778,7 +801,7 @@ function showOverlay(title,text,btns){$('#ov-title').textContent=title;$('#ov-te
  btns.forEach(([label,fn,alt])=>{const b=document.createElement('button');b.className='btn magnet'+(alt?' alt':'');b.textContent=label;b.onclick=()=>{ov.style.display='none';fn()};box.appendChild(b)});ov.style.display='grid';bindFx()}
 function hideOverlay(){ov.style.display='none'}
 const HOWTO={
- snake:{solo:'Flèches ou <kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd>. Chaque bit mangé accélère le jeu.',duo:'J1 🟩 : <kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd> · J2 🟪 : flèches. Le dernier serpent vivant gagne !',online:'Crée une partie et donne le CODE à tes amis, ou entre le leur. Tout le monde joue dans la même arène, en direct.'},
+ snake:{solo:'Flèches ou <kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd>. Chaque bit mangé accélère le jeu.',duo:'J1 🟩 : <kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd> · J2 🟪 : flèches. Le dernier serpent vivant gagne !',online:'Écris ton pseudo, crée un salon et donne le CODE à tes amis. Ils apparaissent dans la liste quand ils entrent. Le créateur lance la partie : à ce moment-là, le code expire.'},
  word:'Devine le mot caché grâce à l\'indice. Tape un mot de la bonne longueur puis <kbd>Entrée</kbd>. 6 essais.',
  bugs:'Clique sur les 🐛 (+1) et les 🦟 (+3). Un ☕ te retire 5 points !',
  memory:'Retourne deux cartes à la fois. Moins tu fais de coups, meilleur est ton score.'
@@ -786,7 +809,7 @@ const HOWTO={
 function selectGame(g){pauseGames(true);game=g;
  $$('#gtabs button').forEach(b=>b.classList.toggle('on',b.dataset.g===g));$$('.game').forEach(x=>x.classList.toggle('on',x.id==='g-'+g));
  screen.classList.toggle('rgb',g==='snake');
- $('#snakeModes').style.display=g==='snake'?'flex':'none';$('#onlineBox').classList.toggle('on',g==='snake'&&mode==='online');
+ $('#snakeModes').style.display=g==='snake'?'flex':'none';$('#snakeSpeed').style.display=g==='snake'?'flex':'none';$('.flabel').style.display=g==='snake'?'':'none';$('#speedNote').style.display=g==='snake'?'':'none';$('#onlineBox').classList.toggle('on',g==='snake'&&mode==='online');
  $('#wordExtra').style.display=g==='word'?'block':'none';
  $('#howto').innerHTML=g==='snake'?HOWTO.snake[mode]:HOWTO[g];
  $('#scoreLbl').textContent=g==='memory'?'COUPS':'SCORE';
@@ -797,31 +820,39 @@ function selectGame(g){pauseGames(true);game=g;
  if(g==='word'){wordIntro()}
 }
 $('#gtabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)selectGame(b.dataset.g)});
-$('#restart').onclick=()=>{hideOverlay();if(game==='snake'){if(mode==='online'){if(net.room)respawn();else toast('Crée ou rejoins une partie d\'abord')}else startSnake()}else if(game==='bugs'){pauseGames();startBugs()}else if(game==='memory')buildMemory(true);else if(game==='word')newWord()};
+$('#restart').onclick=()=>{hideOverlay();if(game==='snake'){if(mode==='online'){if(net.isHost&&net.room)hostStart();else toast(net.room?'Seul le créateur du salon peut lancer la partie':'Crée ou rejoins un salon d\'abord')}else{pauseGames();startSnake()}}else if(game==='bugs'){pauseGames();startBugs()}else if(game==='memory')buildMemory(true);else if(game==='word')newWord()};
 $('#showCode').onclick=()=>openLock(game);
 function pauseGames(leaving){GH.game.end();clearTimeout(snakeT);snakeRun=false;clearInterval(bugT);clearTimeout(bugSpawn);timeLeft=0;if(leaving&&net.room)leaveRoom()}
 
 /* ================= NEON SNAKE ================= */
-const sc=$('#snake'),sx=sc.getContext('2d');let N=21,C=20,players=[],food=null,snakeT=null,snakeRun=false,speed=130,mode='solo';
-const PCOL=['#39ff88','#ff2ee6','#22f0ff','#ffe14d','#ff8a3d','#b38cff'];
+const sc=$('#snake'),sx=sc.getContext('2d');const S=560,P=10;let N=21,C=(S-2*P)/21,players=[],food=null,snakeT=null,snakeRun=false,speed=125,mode='solo';
+const PCOL=['#39ff88','#ff2ee6','#22f0ff','#ffe14d','#ff8a3d','#b38cff','#ff5577','#7dffea'];
+const SPEEDS={lent:[170,'🐢 Lent'],normal:[125,'🙂 Normal'],rapide:[90,'⚡ Rapide'],turbo:[65,'🔥 Turbo']};
+let spKey=store.get('ghd-speed','normal');if(!SPEEDS[spKey])spKey='normal';
+function baseSpeed(){return SPEEDS[spKey][0]}
+function renderSpeed(){$$('#snakeSpeed button').forEach(b=>b.classList.toggle('on',b.dataset.sp===spKey));
+ const lock=mode==='online'&&net.room&&!net.isHost;$$('#snakeSpeed button').forEach(b=>b.disabled=!!lock||snakeRun);
+ $('#speedNote').textContent=lock?'Vitesse choisie par le créateur du salon':(snakeRun?'Change la vitesse entre deux parties':'')}
+$('#snakeSpeed').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;spKey=b.dataset.sp;store.set('ghd-speed',spKey);renderSpeed();if(!snakeRun&&mode!=='online')snakeIntro()});
 function mkSnake(x,y,dx,color,name){return{body:[{x,y},{x:x-dx,y},{x:x-2*dx,y}],dir:{x:dx,y:0},next:{x:dx,y:0},color,name,alive:true,score:0}}
-function setGrid(n){N=n;C=420/n}
+function setGrid(n){N=n;C=(S-2*P)/n}
 function cellsTaken(){const s=new Set();players.forEach(p=>p.body.forEach(b=>s.add(b.x+','+b.y)));remoteSnakes().forEach(r=>r.body.forEach(b=>s.add(b.x+','+b.y)));return s}
 function randFree(){const t=cellsTaken();let c,i=0;do{c={x:2+Math.random()*(N-4)|0,y:2+Math.random()*(N-4)|0};i++}while(t.has(c.x+','+c.y)&&i<500);return c}
 function placeFood(){const c=randFree();food={x:c.x,y:c.y,id:(food?food.id:0)+1}}
-function snakeIntro(){players=[];food=null;setGrid(mode==='online'?28:mode==='duo'?24:21);drawSnake();
- if(mode==='online'){if(!net.room)showOverlay('NEON SNAKE · EN LIGNE','Crée une partie ou entre le code d\'un ami dans le panneau à droite.',[]);else respawn()}
- else showOverlay('NEON SNAKE',mode==='duo'?'Duel sur le même clavier : le dernier serpent en vie gagne !':'Mange les bits, évite ta queue.',[['▶ JOUER',startSnake]])}
+function snakeIntro(){renderSpeed();
+ if(mode==='online'){if(!net.room){players=[];food=null;setGrid(30);drawSnake();showOverlay('NEON SNAKE · EN LIGNE','1. Écris ton pseudo  2. Crée un salon ou entre le code d\'un ami  3. Le créateur lance la partie quand tout le monde est là.',[])}else lobbyOverlay();return}
+ players=[];food=null;setGrid(mode==='duo'?24:21);drawSnake();
+ showOverlay('NEON SNAKE',(mode==='duo'?'Duel sur le même clavier : le dernier serpent en vie gagne !':'Mange les bits, évite les murs et ta queue.')+' Vitesse : '+SPEEDS[spKey][1]+' (change-la à droite).',[['▶ JOUER',startSnake]])}
 function startSnake(){clearTimeout(snakeT);food=null;
- if(mode==='solo'){setGrid(21);players=[mkSnake(10,10,1,PCOL[0],'Toi')];speed=130}
- else if(mode==='duo'){setGrid(24);players=[mkSnake(6,6,1,PCOL[0],'J1'),mkSnake(17,17,-1,PCOL[1],'J2')];speed=120}
- placeFood();snakeRun=true;setScore(0);updateScoreDuo();GH.game.start('snake',mode);tick()}
-function respawn(){setGrid(28);const c=randFree();const me=mkSnake(Math.max(3,c.x),c.y,1,net.color,net.nick);me.body=me.body.map(b=>({x:Math.max(0,b.x),y:b.y}));players=[me];speed=115;setScore(0);hideOverlay();GH.game.start('snake','online');if(!snakeRun){snakeRun=true;tick()}}
-function remoteSnakes(){if(mode!=='online'||!net.room)return[];return net.room.peers().filter(p=>!p.sameTab&&p.presence&&typeof p.presence.b==='string').map(p=>({body:decodeBody(p.presence.b),color:safeColor(p.presence.c),name:String(p.presence.n||'?').slice(0,14),score:+p.presence.s||0,alive:!!p.presence.a,peer:p.peer,ate:p.presence.ate,f:p.presence.f}))}
+ if(mode==='solo'){setGrid(21);players=[mkSnake(10,10,1,PCOL[0],'Toi')]}
+ else if(mode==='duo'){setGrid(24);players=[mkSnake(6,6,1,PCOL[0],'J1'),mkSnake(17,17,-1,PCOL[1],'J2')]}
+ speed=baseSpeed();placeFood();setScore(0);updateScoreDuo();countdown(()=>{snakeRun=true;renderSpeed();GH.game.start('snake',mode+'-'+spKey);tick()})}
+function countdown(done){let n=3;drawSnake();const step=()=>{if(n===0){hideOverlay();done();return}showOverlay(String(n),'Prépare-toi…',[]);n--;setTimeout(step,650)};step()}
 function safeColor(c){return /^#[0-9a-f]{6}$/i.test(c||'')?c:'#ffffff'}
 function encodeBody(b){return b.slice(0,150).map(c=>c.x+'.'+c.y).join(',')}
 function decodeBody(s){return s?s.split(',').slice(0,150).map(t=>{const[a,b]=t.split('.');return{x:+a|0,y:+b|0}}):[]}
 function hits(h,body,skipHead){for(let i=skipHead?1:0;i<body.length;i++)if(body[i].x===h.x&&body[i].y===h.y)return true;return false}
+function cellPx(b){const r=sc.getBoundingClientRect();return[r.left+(P+(b.x+.5)*C)*r.width/S,r.top+(P+(b.y+.5)*C)*r.height/S]}
 function tick(){if(!snakeRun)return;
  const remotes=remoteSnakes();
  if(mode==='online')syncFood(remotes);
@@ -830,27 +861,41 @@ function tick(){if(!snakeRun)return;
   let dead=h.x<0||h.y<0||h.x>=N||h.y>=N;
   players.forEach((q,j)=>{if(hits(h,q.body.slice(0,q.body.length-(q.alive?1:0))))dead=true;if(j!==i&&heads[j]&&heads[j].x===h.x&&heads[j].y===h.y)dead=true});
   remotes.forEach(r=>{if(r.alive&&hits(h,r.body))dead=true});
-  if(dead){p.alive=false;shake();const r=sc.getBoundingClientRect();burst(r.left+(p.body[0].x+.5)*r.width/N,r.top+(p.body[0].y+.5)*r.height/N,20)}});
+  if(dead){p.alive=false;shake();const[x,y]=cellPx(p.body[0]);burst(x,y,22);
+   if(mode==='online'){saveBest(p.score);GH.game.end(p.score);toast('💀 Éliminé ! Regarde la fin de la partie')}}});
  players.forEach((p,i)=>{const h=heads[i];if(!h||!p.alive)return;p.body.unshift(h);
-  if(food&&h.x===food.x&&h.y===food.y&&net.lastAte!==food.id){p.score++;flashBorder();const r=sc.getBoundingClientRect();burst(r.left+(h.x+.5)*r.width/N,r.top+(h.y+.5)*r.height/N,12);
-   if(mode==='solo')speed=Math.max(55,speed-4);
+  if(food&&h.x===food.x&&h.y===food.y&&net.lastAte!==food.id){p.score++;flashBorder();const[x,y]=cellPx(h);burst(x,y,12);
+   if(mode==='solo')speed=Math.max(baseSpeed()*.5,speed-3);
    if(mode==='online'){net.lastAte=food.id;if(net.isHost)placeFood();else food=null}else placeFood()}
   else p.body.pop()});
  if(mode==='duo'){updateScoreDuo()}else setScore(players[0]?players[0].score:0);
  if(mode==='online')publish();
  drawSnake(remotes);
- if(mode==='solo'&&!players[0].alive){snakeRun=false;saveBest(score);GH.game.end(score);showOverlay('GAME OVER','Score : '+score+'. On retente ?',[['↻ REJOUER',startSnake]]);return}
- if(mode==='duo'){const alive=players.filter(p=>p.alive);if(alive.length<2){snakeRun=false;GH.game.end(Math.max(players[0].score,players[1].score));const w=alive[0];showOverlay(w?(w.name==='J1'?'🟩 J1 GAGNE !':'🟪 J2 GAGNE !'):'ÉGALITÉ !','J1 : '+players[0].score+' · J2 : '+players[1].score,[['↻ REVANCHE',startSnake]]);return}}
- if(mode==='online'&&players[0]&&!players[0].alive&&!net.deadShown){net.deadShown=true;saveBest(players[0].score);GH.game.end(players[0].score);showOverlay('💀 ÉLIMINÉ','Score : '+players[0].score+'. Les autres continuent…',[['↻ RESPAWN',()=>{net.deadShown=false;respawn()}]])}
+ if(mode==='solo'&&!players[0].alive){snakeRun=false;renderSpeed();saveBest(score);GH.game.end(score);showOverlay('GAME OVER','Score : '+score+'. On retente ?',[['↻ REJOUER',startSnake]]);return}
+ if(mode==='duo'){const alive=players.filter(p=>p.alive);if(alive.length<2){snakeRun=false;renderSpeed();GH.game.end(Math.max(players[0].score,players[1].score));const w=alive[0];showOverlay(w?(w.name==='J1'?'🟩 J1 GAGNE !':'🟪 J2 GAGNE !'):'ÉGALITÉ !','J1 : '+players[0].score+' · J2 : '+players[1].score,[['↻ REVANCHE',startSnake]]);return}}
+ if(mode==='online'&&roundOver(remotes))return;
  snakeT=setTimeout(tick,speed)}
 function updateScoreDuo(){if(mode==='duo'&&players.length===2){$('#score').textContent=players[0].score+' – '+players[1].score;$('#scoreLbl').textContent='J1 – J2'}else $('#scoreLbl').textContent='SCORE'}
 function flashBorder(){screen.classList.add('flash');setTimeout(()=>screen.classList.remove('flash'),120)}
-function drawSnake(remotes){remotes=remotes||remoteSnakes();sx.fillStyle='#050414';sx.fillRect(0,0,420,420);sx.strokeStyle='rgba(139,92,255,.08)';sx.lineWidth=1;
- for(let i=0;i<=N;i++){sx.beginPath();sx.moveTo(i*C,0);sx.lineTo(i*C,420);sx.stroke();sx.beginPath();sx.moveTo(0,i*C);sx.lineTo(420,i*C);sx.stroke()}
- if(food){sx.shadowBlur=18;sx.shadowColor='#ff2ee6';sx.fillStyle='#ff2ee6';sx.font=`bold ${Math.round(C*.8)}px JetBrains Mono`;sx.textAlign='center';sx.textBaseline='middle';sx.fillText(food.id%2?'1':'0',food.x*C+C/2,food.y*C+C/2+1)}
- const drawOne=(s,ghost)=>{if(!s.body.length)return;sx.globalAlpha=s.alive?(ghost?.85:1):.25;s.body.forEach((b,i)=>{sx.shadowBlur=i?8:20;sx.shadowColor=s.color;sx.fillStyle=i?s.color:'#ffffff';sx.beginPath();if(sx.roundRect)sx.roundRect(b.x*C+1,b.y*C+1,C-2,C-2,Math.min(6,C/3));else sx.rect(b.x*C+1,b.y*C+1,C-2,C-2);sx.fill()});
-  if(mode!=='solo'){sx.shadowBlur=0;sx.globalAlpha=1;sx.fillStyle=s.color;sx.font='bold 11px JetBrains Mono';sx.textAlign='center';sx.fillText(s.name,Math.min(400,Math.max(20,s.body[0].x*C+C/2)),Math.max(10,s.body[0].y*C-6))}sx.globalAlpha=1};
- remotes.forEach(r=>drawOne(r,true));players.forEach(p=>drawOne(p,false));sx.shadowBlur=0}
+function drawSnake(remotes){remotes=remotes||remoteSnakes();const t=Date.now();
+ sx.shadowBlur=0;sx.globalAlpha=1;sx.fillStyle='#020108';sx.fillRect(0,0,S,S);
+ sx.fillStyle='#0d0a2e';sx.fillRect(P,P,S-2*P,S-2*P);
+ sx.strokeStyle='rgba(139,92,255,.13)';sx.lineWidth=1;
+ for(let i=1;i<N;i++){sx.beginPath();sx.moveTo(P+i*C,P);sx.lineTo(P+i*C,S-P);sx.stroke();sx.beginPath();sx.moveTo(P,P+i*C);sx.lineTo(S-P,P+i*C);sx.stroke()}
+ // bordure lumineuse qui change de couleur = les murs
+ const hue=(t/18)%360;sx.lineWidth=5;sx.strokeStyle=`hsl(${hue},100%,62%)`;sx.shadowColor=sx.strokeStyle;sx.shadowBlur=22;sx.strokeRect(P-3,P-3,S-2*P+6,S-2*P+6);sx.shadowBlur=0;
+ // mur en danger (tête à 2 cases ou moins) : il devient rouge
+ const me=players[0];if(me&&me.alive&&snakeRun){const h=me.body[0],d=me.dir;let side=null,dist=99;
+  if(d.x===1){dist=N-1-h.x;side='r'}else if(d.x===-1){dist=h.x;side='l'}else if(d.y===1){dist=N-1-h.y;side='b'}else if(d.y===-1){dist=h.y;side='t'}
+  if(dist<=2){const a=.55+.45*Math.sin(t/60);sx.strokeStyle=`rgba(255,51,85,${a})`;sx.shadowColor='#ff3355';sx.shadowBlur=26;sx.lineWidth=8;sx.beginPath();
+   if(side==='r'){sx.moveTo(S-P+3,P-3);sx.lineTo(S-P+3,S-P+3)}if(side==='l'){sx.moveTo(P-3,P-3);sx.lineTo(P-3,S-P+3)}if(side==='b'){sx.moveTo(P-3,S-P+3);sx.lineTo(S-P+3,S-P+3)}if(side==='t'){sx.moveTo(P-3,P-3);sx.lineTo(S-P+3,P-3)}
+   sx.stroke();sx.shadowBlur=0}}
+ if(food){sx.shadowBlur=18;sx.shadowColor='#ff2ee6';sx.fillStyle='#ff2ee6';sx.font=`bold ${Math.round(C*.8)}px JetBrains Mono`;sx.textAlign='center';sx.textBaseline='middle';sx.fillText(food.id%2?'1':'0',P+food.x*C+C/2,P+food.y*C+C/2+1);sx.shadowBlur=0}
+ const drawOne=(s,ghost)=>{if(!s.body.length)return;sx.globalAlpha=s.alive?(ghost?.85:1):.22;s.body.forEach((b,i)=>{sx.shadowBlur=i?8:20;sx.shadowColor=s.color;sx.fillStyle=i?s.color:'#ffffff';sx.beginPath();const x=P+b.x*C+1,y=P+b.y*C+1;if(sx.roundRect)sx.roundRect(x,y,C-2,C-2,Math.min(6,C/3));else sx.rect(x,y,C-2,C-2);sx.fill()});
+  if(mode!=='solo'){sx.shadowBlur=0;sx.globalAlpha=1;sx.fillStyle=s.color;sx.font='bold 12px JetBrains Mono';sx.textAlign='center';sx.textBaseline='alphabetic';sx.fillText(s.name,Math.min(S-40,Math.max(40,P+s.body[0].x*C+C/2)),Math.max(14,P+s.body[0].y*C-6))}sx.globalAlpha=1};
+ remotes.forEach(r=>drawOne(r,true));players.forEach(p=>drawOne(p,false));sx.shadowBlur=0;
+ if(mode==='online'&&me&&!me.alive&&snakeRun){sx.fillStyle='rgba(2,1,8,.65)';sx.fillRect(P,P,S-2*P,44);sx.fillStyle='#ff5577';sx.font='bold 16px JetBrains Mono';sx.textAlign='center';sx.textBaseline='middle';sx.fillText('💀 ÉLIMINÉ — tu regardes la fin',S/2,P+22)}}
+(function idleBorder(){if(game==='snake'&&!snakeRun&&location.hash==='#gaming')drawSnake();setTimeout(idleBorder,120)})();
 const KEYMAP={ArrowUp:[1,'up'],ArrowDown:[1,'down'],ArrowLeft:[1,'left'],ArrowRight:[1,'right'],z:[0,'up'],w:[0,'up'],s:[0,'down'],q:[0,'left'],a:[0,'left'],d:[0,'right']};
 const DIRS={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}};
 function steer(p,k){const d=DIRS[k];if(p&&d&&!(d.x===-p.dir.x&&d.y===-p.dir.y))p.next=d}
@@ -861,37 +906,106 @@ let tsx,tsy;sc.addEventListener('touchstart',e=>{tsx=e.touches[0].clientX;tsy=e.
 sc.addEventListener('touchend',e=>{if(!snakeRun)return;const dx=e.changedTouches[0].clientX-tsx,dy=e.changedTouches[0].clientY-tsy;if(Math.abs(dx)+Math.abs(dy)<20)return;steer(players[0],Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up'))});
 $('#snakeModes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pauseGames(true);mode=b.dataset.m;$$('#snakeModes button').forEach(x=>x.classList.toggle('on',x===b));$('#onlineBox').classList.toggle('on',mode==='online');$('#howto').innerHTML=HOWTO.snake[mode];setScore(0);updateScoreDuo();snakeIntro()});
 
-/* ---- Snake en ligne (Supabase Realtime) ---- */
-const net={room:null,nick:'',color:PCOL[Math.random()*PCOL.length|0],isHost:false,lastAte:0,deadShown:false,timer:null,tk:0,lastKey:''};
-$('#nick').value=store.get('ghd-nick','Joueur'+(Math.random()*90+10|0));
-function netMsg(t){$('#netStatus').textContent=t||(GH.ready?'Prêt ! Crée une partie ou rejoins celle d\'un ami.':'Le mode en ligne s\'active quand le site est relié à Supabase. En attendant, essaie le Duo local 👥')}
+/* ---- Snake en ligne : salon (lobby) + partie (Supabase Realtime) ---- */
+const SPAWNS=[[5,5,1],[24,24,-1],[24,5,-1],[5,24,1],[5,14,1],[24,15,-1],[13,3,1],[16,26,-1]];
+const net={room:null,code:'',nick:'',myId:null,hostId:null,isHost:false,phase:'idle',order:[],names:[],states:new Map(),lastAte:0,tk:0,lastKey:'',timer:null,round:0,joinT:0,missing:0,playStart:0};
+$('#nick').value=store.get('ghd-nick','');
+function netMsg(t){$('#netStatus').textContent=t||(GH.ready?'':'Le mode en ligne s\'active quand le site est relié à Supabase. En attendant, essaie le Duo local 👥')}
 netMsg();
-async function joinRoom(code){
+function nickOk(){const el=$('#nick'),v=el.value.trim();if(v.length<2){toast('✏️ Écris d\'abord ton pseudo (2 lettres minimum)');el.focus();el.animate([{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'none'}],{duration:300});el.style.borderColor='var(--red)';return null}el.style.borderColor='';return v.slice(0,14)}
+function cleanName(n){return String(n==null?'?':n).replace(/[\u0000-\u001f]/g,'').slice(0,14)||'?'}
+function sortedMembers(){if(!net.room)return[];return net.room.members().filter(m=>typeof m.n==='string').sort((a,b)=>(+a.t||0)-(+b.t||0)||(a.id<b.id?-1:1))}
+async function connectRoom(asHost){
  if(!GH.ready){netMsg();toast('Mode en ligne pas encore configuré');return}
- code=code.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);if(!code){toast('Entre un code');return}
- net.nick=($('#nick').value.trim()||'Joueur').slice(0,14);store.set('ghd-nick',net.nick);
+ const nick=nickOk();if(!nick)return;
+ let code=asHost?Math.random().toString(36).slice(2,7):$('#roomCode').value.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);
+ if(!code){toast('Entre le code du salon');$('#roomCode').focus();return}
+ net.nick=nick;store.set('ghd-nick',nick);
  if(net.room)await leaveRoom();
- netMsg('Connexion…');
- try{net.room=await GH.joinRoom('snake-'+code,{nick:net.nick,color:net.color})}catch(e){net.room=null;netMsg('Impossible de rejoindre ('+(e&&e.code||'erreur')+'). Réessaie.');return}
- $('#roomCode').value=code.toUpperCase();netMsg('🟢 Partie '+code.toUpperCase()+' — donne ce code à tes amis !');
- net.timer=setInterval(renderPlayers,1000);
- net.lastAte=0;food=null;respawn();
+ netMsg(asHost?'Création du salon…':'Connexion au salon…');
+ net.joinT=Date.now();
+ let room;try{room=await GH.joinRoom('snake-'+code,{n:nick,host:asHost,phase:'lobby',t:net.joinT})}catch(e){netMsg('Connexion impossible ('+(e&&e.code||'erreur')+'). Réessaie.');return}
+ Object.assign(net,{room,code,myId:room.myId,isHost:asHost,hostId:asHost?room.myId:null,phase:'lobby',states:new Map(),order:[],round:0,missing:0});
+ room.on('st',onNetState);room.on('start',onNetStart);room.on('ctl',onNetCtl);room.onSync(renderLobby);
+ if(!asHost){
+  await sleep(1800);if(net.room!==room)return;
+  const h=room.members().find(m=>m.host===true);
+  if(!h){await leaveRoom();netMsg('❌ Ce salon n\'existe pas, ou son créateur est parti. Vérifie le code.');return}
+  if(h.phase!=='lobby'){await leaveRoom();netMsg('⛔ La partie a déjà commencé : ce code a expiré.');return}
+  net.hostId=h.id}
+ $('#onStep1').style.display='none';$('#onLobby').style.display='block';$('#lobbyCode').textContent=code.toUpperCase();
+ netMsg(asHost?'🟢 Salon créé ! Donne le code à tes amis.':'🟢 Tu es dans le salon.');
+ net.timer=setInterval(()=>{renderLobby();checkHost()},1000);
+ renderSpeed();renderLobby();lobbyOverlay();
 }
-async function leaveRoom(){clearInterval(net.timer);const r=net.room;net.room=null;try{r&&await r.leave()}catch(e){}$('#plist').innerHTML='';netMsg()}
-$('#createRoom').onclick=()=>joinRoom(Math.random().toString(36).slice(2,7));
-$('#joinRoom').onclick=()=>joinRoom($('#roomCode').value);
-function publish(){if(!net.room)return;const me=players[0];if(!me)return;
- const st={n:net.nick,c:net.color,b:encodeBody(me.body),s:me.score,a:me.alive,ate:net.lastAte,f:net.isHost&&food?{x:food.x,y:food.y,id:food.id}:null};
+async function leaveRoom(){clearInterval(net.timer);clearTimeout(snakeT);snakeRun=false;const r=net.room;
+ if(r&&net.isHost){try{await r.send('ctl',{type:'close'})}catch(e){}}
+ net.room=null;net.phase='idle';net.isHost=false;net.order=[];try{r&&await r.leave()}catch(e){}
+ $('#plist').innerHTML='';$('#onStep1').style.display='block';$('#onLobby').style.display='none';netMsg();renderSpeed()}
+async function quitLobby(){await leaveRoom();if(game==='snake'&&mode==='online')snakeIntro()}
+function salonClosed(msg){leaveRoom();players=[];drawSnake();showOverlay('🚪 SALON FERMÉ',msg,[['OK',()=>snakeIntro()]]);netMsg(msg)}
+function checkHost(){if(!net.room||net.isHost)return;const ok=net.room.members().some(m=>m.id===net.hostId);net.missing=ok?0:net.missing+1;if(net.missing>=4)salonClosed('Le créateur a quitté le salon.')}
+function onNetCtl(p){if(!p||p.id!==net.hostId)return;if(p.type==='close')salonClosed('Le créateur a fermé le salon.')}
+function renderLobby(){const ul=$('#plist');if(!net.room){ul.innerHTML='';return}
+ const mem=sortedMembers();ul.innerHTML='';
+ mem.forEach((m,i)=>{const li=document.createElement('li'),l=document.createElement('span'),dot=document.createElement('i');
+  const oi=net.order.indexOf(m.id);const col=PCOL[(oi>=0?oi:i)%PCOL.length];dot.style.background=col;dot.style.boxShadow='0 0 8px '+col;
+  let label=cleanName(m.n);if(m.host)label='👑 '+label;if(m.id===net.myId)label+=' (toi)';
+  if(net.phase!=='lobby'&&oi>=0){const alive=m.id===net.myId?(players[0]&&players[0].alive):(()=>{const s=net.states.get(m.id);return s?s.a:true})();if(!alive)label+=' 💀'}
+  l.append(dot,document.createTextNode(label));const b=document.createElement('b');
+  b.textContent=oi<0?(net.phase==='lobby'?'prêt':'—'):String(m.id===net.myId?(players[0]?players[0].score:0):((net.states.get(m.id)||{}).s||0));
+  li.append(l,b);ul.appendChild(li)});
+ const n=mem.length,sb=$('#startRound');
+ sb.style.display=net.isHost?'':'none';sb.disabled=!net.isHost||net.phase==='playing'||net.phase==='countdown';
+ sb.textContent=net.phase==='over'?'↻ Revanche ('+n+' joueur'+(n>1?'s':'')+')':'▶ Lancer la partie ('+n+' joueur'+(n>1?'s':'')+')';
+ $('#lobbyStatus').textContent=net.phase==='lobby'?(net.isHost?(n<2?'⏳ En attente d\'amis… (tu peux aussi lancer seul pour tester)':'✅ Tout le monde est là ? Lance la partie !'):'⏳ En attente que le créateur lance la partie…'):(net.phase==='over'?(net.isHost?'Partie terminée. Revanche ?':'Partie terminée. En attente d\'une revanche…'):'🎮 Partie en cours · le code a expiré');
+ if(net.phase==='lobby'&&ov.style.display!=='none')$('#ov-text').textContent=n+' joueur'+(n>1?'s':'')+' dans le salon. '+(net.isHost?'Lance quand tout le monde est là.':'En attente du créateur…')}
+function lobbyOverlay(){if(!net.room)return;const n=sortedMembers().length||1;players=[];food=null;setGrid(30);drawSnake();
+ showOverlay('SALON '+net.code.toUpperCase(),n+' joueur'+(n>1?'s':'')+' dans le salon. '+(net.isHost?'Lance quand tout le monde est là.':'En attente du créateur…'),net.isHost?[['▶ LANCER LA PARTIE',hostStart],['🚪 Quitter',quitLobby,true]]:[['🚪 Quitter',quitLobby,true]])}
+function hostStart(){if(!net.isHost||!net.room||net.phase==='playing'||net.phase==='countdown')return;
+ const mem=sortedMembers().slice(0,8);if(sortedMembers().length>8)toast('8 joueurs maximum : les derniers arrivés regardent');
+ if(!mem.some(m=>m.id===net.myId))mem.unshift({id:net.myId,n:net.nick});
+ net.round++;const p={round:net.round,order:mem.map(m=>m.id),names:mem.map(m=>cleanName(m.n)),speed:baseSpeed()};
+ net.room.track({n:net.nick,host:true,phase:'playing',t:net.joinT});
+ net.room.send('start',p);beginRound(p)}
+function onNetStart(p){if(!p||p.id!==net.hostId||!Array.isArray(p.order))return;
+ if(!p.order.includes(net.myId)){netMsg('La partie a commencé sans toi (salon plein).');return}
+ net.room.track({n:net.nick,host:false,phase:'playing',t:net.joinT});beginRound(p)}
+function beginRound(p){clearTimeout(snakeT);snakeRun=false;
+ net.order=p.order.slice(0,8).map(String);net.names=(p.names||[]).slice(0,8).map(cleanName);net.round=+p.round||1;
+ speed=Math.min(250,Math.max(50,+p.speed||125));net.phase='countdown';net.states=new Map();net.lastAte=0;food=null;setGrid(30);
+ const i=Math.max(0,net.order.indexOf(net.myId)),sp=SPAWNS[i];players=[mkSnake(sp[0],sp[1],sp[2],PCOL[i],net.nick)];
+ if(net.isHost)placeFood();setScore(0);renderLobby();renderSpeed();
+ countdown(()=>{net.phase='playing';net.playStart=Date.now();snakeRun=true;GH.game.start('snake','online');renderLobby();tick()})}
+function onNetState(p){if(!p||typeof p.id!=='string'||!net.order.includes(p.id)||(+p.round||0)!==net.round)return;
+ net.states.set(p.id,{b:typeof p.b==='string'?p.b.slice(0,1200):'',s:Math.max(0,+p.s||0),a:!!p.a,ate:+p.ate||0,f:p.f&&typeof p.f.x==='number'?{x:p.f.x|0,y:p.f.y|0,id:p.f.id|0}:null,_t:Date.now()})}
+function remoteSnakes(){if(mode!=='online'||!net.room||!net.order.length)return[];const now=Date.now();
+ return net.order.filter(id=>id!==net.myId).map(id=>{const i=net.order.indexOf(id),s=net.states.get(id);
+  if(!s)return{body:[],color:PCOL[i],name:net.names[i]||'?',score:0,alive:now-net.playStart<5000,peer:id,ate:0,f:null};
+  return{body:decodeBody(s.b),color:PCOL[i],name:net.names[i]||'?',score:s.s,alive:s.a&&now-s._t<4000,peer:id,ate:s.ate,f:s.f}})}
+function publish(force){if(!net.room)return;const me=players[0];if(!me)return;
+ const st={round:net.round,b:encodeBody(me.body),s:me.score,a:me.alive,ate:net.lastAte,f:net.isHost&&food?{x:food.x,y:food.y,id:food.id}:null};
  const key=st.a+'|'+st.s+'|'+st.ate+'|'+(st.f?st.f.id:'');
- if(net.tk++%2===0||key!==net.lastKey){net.lastKey=key;Promise.resolve(net.room.presence(st)).catch(()=>{})}}
-function syncFood(remotes){if(!net.room)return;const ps=net.room.peers().filter(p=>p.sameTab||(p.presence&&typeof p.presence.b==='string'));
- const sorted=ps.map(p=>p.peer).sort();const meP=ps.find(p=>p.sameTab);net.isHost=!!meP&&sorted[0]===meP.peer;
+ if(force||net.tk++%2===0||key!==net.lastKey){net.lastKey=key;Promise.resolve(net.room.send('st',st)).catch(()=>{})}}
+function syncFood(remotes){if(!net.room)return;
  if(net.isHost){if(!food)placeFood();if(remotes.some(r=>r.ate===food.id))placeFood()}
- else{const host=remotes.find(r=>r.peer===sorted[0]);const f=host&&host.f;if(f&&typeof f.x==='number'){if(f.id!==net.lastAte)food={x:f.x|0,y:f.y|0,id:f.id|0};else food=null}}}
-function renderPlayers(){const ul=$('#plist');ul.innerHTML='';if(!net.room)return;
- net.room.peers().forEach(p=>{const pr=p.presence||{};if(!p.sameTab&&typeof pr.b!=='string')return;const li=document.createElement('li');const l=document.createElement('span');const i=document.createElement('i');
-  const col=p.sameTab?net.color:safeColor(pr.c);i.style.background=col;i.style.boxShadow='0 0 8px '+col;l.appendChild(i);l.appendChild(document.createTextNode((p.sameTab?net.nick+' (toi)':String(pr.n||'?').slice(0,14))+((p.sameTab?(players[0]&&!players[0].alive):pr.a===false)?' 💀':'')));
-  const sc=document.createElement('b');sc.textContent=p.sameTab?(players[0]?players[0].score:0):(+pr.s||0);li.appendChild(l);li.appendChild(sc);ul.appendChild(li)})}
+ else{const h=remotes.find(r=>r.peer===net.hostId);const f=h&&h.f;if(f){if(f.id!==net.lastAte)food=f;else food=null}}}
+function roundOver(remotes){const me=players[0];const total=net.order.length;
+ const alive=(me&&me.alive?1:0)+remotes.filter(r=>r.alive).length;
+ if(!(total>=2?alive<=1:alive===0))return false;
+ snakeRun=false;net.phase='over';publish(true);if(me&&me.alive){saveBest(me.score);GH.game.end(me.score)}
+ const res=[{name:net.nick+' (toi)',score:me?me.score:0,alive:me&&me.alive}].concat(remotes.map(r=>({name:r.name,score:r.score,alive:r.alive}))).sort((a,b)=>(b.alive-a.alive)||(b.score-a.score));
+ const w=res[0];const title=total>=2?(w.alive?'🏆 '+w.name.replace(' (toi)','')+' GAGNE !':'ÉGALITÉ !'):'FIN DE PARTIE';
+ if(net.isHost)net.room.track({n:net.nick,host:true,phase:'over',t:net.joinT});
+ showOverlay(title,res.map(r=>r.name+' : '+r.score).join(' · '),net.isHost?[['↻ REVANCHE',hostStart],['🚪 Quitter',quitLobby,true]]:[['🚪 Quitter le salon',quitLobby,true]]);
+ renderLobby();renderSpeed();return true}
+$('#createRoom').onclick=()=>connectRoom(true);
+$('#joinRoom').onclick=()=>connectRoom(false);
+$('#roomCode').addEventListener('keydown',e=>{if(e.key==='Enter')connectRoom(false)});
+$('#startRound').onclick=hostStart;
+$('#leaveLobby').onclick=quitLobby;
+$('#copyCode').onclick=()=>copy(net.code.toUpperCase());
+renderSpeed();
 
 /* ================= MOT MYSTÈRE ================= */
 const WORDS={
