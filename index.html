@@ -248,6 +248,13 @@ h2.sec .hl{background:linear-gradient(90deg,var(--pink),var(--violet));-webkit-b
 .game{display:none;width:100%;place-items:center}.game.on{display:grid}
 .overlay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(5,4,20,.84);text-align:center;z-index:3;padding:20px}
 .overlay h3{font-family:var(--title);font-size:30px;color:var(--green);text-shadow:0 0 18px var(--green);margin-bottom:8px}
+.overlay.win{background:radial-gradient(circle,rgba(255,225,77,.18),rgba(5,4,20,.9) 70%)}
+.overlay.win h3{color:var(--yellow);text-shadow:0 0 24px var(--yellow),0 0 60px var(--pink);animation:winPulse .55s ease-in-out infinite alternate}
+@keyframes winPulse{from{transform:scale(1) rotate(-1deg)}to{transform:scale(1.14) rotate(1deg)}}
+.confetti{position:fixed;top:0;z-index:600;pointer-events:none;border-radius:2px}
+.wround{font-family:var(--title);font-size:14px;letter-spacing:2px;color:var(--cyan);text-shadow:0 0 10px var(--cyan);min-height:18px}
+.flabel2{font-size:12px;color:var(--muted);margin:12px 0 6px}
+.wnote{font-size:11px;color:var(--muted);line-height:1.5}
 .overlay p{font-family:var(--mono);color:var(--muted);margin-bottom:18px;max-width:420px}
 .overlay .obtns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .memory{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:min(420px,100%)}
@@ -518,6 +525,7 @@ body.upside{transform:rotate(180deg);transition:transform 1s}
       </div>
       <div class="game" id="g-word">
         <div class="word">
+          <div class="wround" id="wRoundLbl"></div>
           <div class="whint">💡 <span id="whint"></span><span class="pat" id="wpat"></span></div>
           <div class="wgrid" id="wgrid"></div>
           <div class="wmsg" id="wmsg"></div>
@@ -567,8 +575,16 @@ body.upside{transform:rotate(180deg);transition:transform 1s}
       </div>
       <p id="howto"></p>
       <div id="wordExtra" style="display:none">
-        <div class="row"><button class="btn alt sm" id="wLangFr">🇫🇷 FR</button><button class="btn alt sm" id="wLangEn">🇬🇧 EN</button><button class="btn sm" id="wReveal">💡 Lettre (-5)</button></div>
+        <div class="flabel2">LANGUE</div>
+        <div class="modes" id="wLang"><button data-l="fr">🇫🇷 Français</button><button data-l="en">🇬🇧 English</button></div>
+        <div class="flabel2">INDICE</div>
+        <div class="modes" id="wHint"><button data-h="on">💡 Avec indice</button><button data-h="off">🔤 Sans · 1re lettre</button></div>
+        <div class="flabel2">NOMBRE DE MANCHES</div>
+        <div class="modes" id="wRounds"><button data-r="1">1 manche</button><button data-r="3">3 manches</button><button data-r="5">5 manches</button></div>
+        <div id="wNote" class="wnote"></div>
+        <div class="row"><button class="btn sm" id="wReveal">💡 Révéler une lettre (-10)</button></div>
         <div class="legend"><span><b style="background:var(--red)"></b>bien placée</span><span><b style="background:var(--yellow);border-radius:50%"></b>mal placée</span><span><b style="background:#050414;border:1px solid #333"></b>absente</span></div>
+        <p class="wnote" style="margin-top:8px">Points par manche : 1er essai 100 · 2e 90 · 3e 80 · 4e 70 · 5e 60 · 6e 50 · raté 0</p>
       </div>
       <div class="row">
         <button class="btn alt sm magnet" id="restart">↻ Recommencer</button>
@@ -833,12 +849,12 @@ function showOverlay(title,text,btns){$('#ov-title').textContent=title;$('#ov-te
 function hideOverlay(){ov.style.display='none'}
 const HOWTO={
  snake:{solo:'Flèches ou <kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd> (sur téléphone : les gros boutons sous le jeu). Chaque bit mangé accélère le jeu.',duo:'J1 🟩 : <kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd> · J2 🟪 : flèches. Le dernier serpent vivant gagne !'},
- word:'Devine le mot caché grâce à l\'indice. Tape un mot de la bonne longueur puis <kbd>Entrée</kbd>. 6 essais.',
+ word:'Devine le mot caché en 6 essais. Choisis à droite : la langue, avec indice ou sans (la 1re lettre est donnée), et le nombre de manches.',
  bugs:'Clique sur les 🐛 (+1) et les 🦟 (+3). Un ☕ te retire 5 points !',
  memory:'Retourne deux cartes à la fois. Moins tu fais de coups, meilleur est ton score.',
  online:{
   snake:'Tous dans la même arène, en direct. Le dernier serpent en vie gagne. Le créateur choisit la vitesse.',
-  word:'Tout le monde cherche le MÊME mot en même temps. Celui qui le trouve en moins d\'essais (puis le plus vite) gagne. Le créateur choisit la langue.',
+  word:'Tout le monde cherche les MÊMES mots, manche après manche. 100 pts au 1er essai, 90 au 2e… Le plus gros total gagne. Le créateur choisit la langue, l\'indice et le nombre de manches.',
   bugs:'30 secondes, les mêmes bugs pour tout le monde. Le meilleur score gagne.',
   memory:'Le même jeu de cartes pour tout le monde. Celui qui trouve toutes les paires en moins de coups (puis le plus vite) gagne.'}
 };
@@ -851,7 +867,7 @@ function selectGame(g){pauseGames(true);game=g;mode=MODES[g];
  $('#onlineBox').classList.toggle('on',mode==='online');
  $('#wordExtra').style.display=g==='word'?'block':'none';
  $('#howto').innerHTML=mode==='online'?HOWTO.online[g]:(isS?HOWTO.snake[mode]:HOWTO[g]);
- $('#scoreLbl').textContent=g==='memory'?'COUPS':'SCORE';
+ $('#scoreLbl').textContent=g==='memory'?'COUPS':(g==='word'?'POINTS':'SCORE');
  $('#best').textContent=best();setScore(0);RND=Math.random;
  if(mode==='online'){onlineIntro();return}
  if(isS){snakeIntro()}
@@ -863,7 +879,7 @@ $('#gtabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b
 $('#snakeModes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;MODES[game]=b.dataset.m;selectGame(game)});
 $('#restart').onclick=()=>{hideOverlay();
  if(mode==='online'){if(net.isHost&&net.room)hostStart();else toast(net.room?'Seul le créateur du salon peut lancer la partie':'Crée ou rejoins un salon d\'abord');return}
- if(game==='snake'){pauseGames();startSnake()}else if(game==='bugs'){pauseGames();startBugs()}else if(game==='memory')buildMemory(true);else if(game==='word')newWord()};
+ if(game==='snake'){pauseGames();startSnake()}else if(game==='bugs'){pauseGames();startBugs()}else if(game==='memory')buildMemory(true);else if(game==='word')startWordGame()};
 $('#showCode').onclick=()=>openLock(game);
 function pauseGames(leaving){GH.game.end();clearTimeout(snakeT);snakeRun=false;clearInterval(bugT);clearTimeout(bugSpawn);timeLeft=0;if(leaving&&net.room)leaveRoom()}
 
@@ -925,7 +941,7 @@ function renderLobby(){const ul=$('#plist');if(!net.room){ul.innerHTML='';return
  $('#lobbyStatus').textContent=net.phase==='lobby'?(net.isHost?(n<2?'⏳ En attente d\'amis… (tu peux aussi lancer seul pour tester)':'✅ Tout le monde est là ? Lance la partie !'):'⏳ En attente que le créateur lance la partie…'):(net.phase==='over'?(net.isHost?'Partie terminée. Revanche ?':'Partie terminée. En attente d\'une revanche…'):'🎮 Partie en cours · le code a expiré');
  if(net.phase==='lobby'&&ov.style.display!=='none')$('#ov-text').textContent=n+' joueur'+(n>1?'s':'')+' dans le salon. '+(net.isHost?'Lance quand tout le monde est là.':'En attente du créateur…')}
 function lobbyOverlay(){if(!net.room)return;const n=sortedMembers().length||1;OG[game].idle();
- showOverlay('SALON '+net.code.toUpperCase()+' · '+NAMES[game].toUpperCase(),n+' joueur'+(n>1?'s':'')+' dans le salon. '+(net.isHost?'Lance quand tout le monde est là.':'En attente du créateur…'),net.isHost?[['▶ LANCER LA PARTIE',hostStart],['🚪 Quitter',quitLobby,true]]:[['🚪 Quitter',quitLobby,true]])}
+ showOverlay('SALON '+net.code.toUpperCase()+' · '+NAMES[game].toUpperCase(),n+' joueur'+(n>1?'s':'')+' dans le salon. '+(net.isHost?'Lance quand tout le monde est là.':'En attente du créateur…')+(game==='word'&&net.isHost?' Réglages : '+wSummary()+'.':''),net.isHost?[['▶ LANCER LA PARTIE',hostStart],['🚪 Quitter',quitLobby,true]]:[['🚪 Quitter',quitLobby,true]])}
 function hostStart(){if(!net.isHost||!net.room||net.phase==='playing'||net.phase==='countdown')return;
  const all=sortedMembers();const mem=all.slice(0,8);if(all.length>8)toast('8 joueurs maximum : les derniers arrivés regardent');
  if(!mem.some(m=>m.id===net.myId))mem.unshift({id:net.myId,n:net.nick});
@@ -951,7 +967,7 @@ function finishGeneric(){const o=OG[net.game];
  const res=net.order.map((id,i)=>({name:(id===net.myId?net.nick+' (toi)':(net.names[i]||'?')),st:stateOf(id)||{}})).sort((a,b)=>o.cmp(a.st,b.st));
  const w=res[0];const title=o.winner(w)?'🏆 '+w.name.replace(' (toi)','')+' GAGNE !':(o.noWinner||'FIN DE PARTIE');
  netFinish(title,(o.prefix?o.prefix()+' · ':'')+res.map((r,k)=>(k+1)+'. '+r.name+' : '+o.label(r.st)).join(' · '))}
-function netFinish(title,text){net.phase='over';if(net.isHost)net.room.track({n:net.nick,host:true,phase:'over',t:net.joinT});
+function netFinish(title,text){net.phase='over';if(/^🏆/.test(title))setTimeout(celebrate,150);if(net.isHost)net.room.track({n:net.nick,host:true,phase:'over',t:net.joinT});
  showOverlay(title,text,net.isHost?[['↻ REVANCHE',hostStart],['🚪 Quitter',quitLobby,true]]:[['🚪 Quitter le salon',quitLobby,true]]);
  renderLobby();if(net.game==='snake')renderSpeed()}
 $('#createRoom').onclick=()=>connectRoom(true);
@@ -1077,17 +1093,38 @@ const WORDS={
  en:[["PLAY","What you do with a game"],["GAME","Something you play"],["CODE","What developers write"],["MOUSE","It moves on your desk… but it isn't an animal"],["SCREEN","You are looking at it right now"],["PIXEL","The smallest dot of an image"],["ROBOT","A machine that imitates humans"],["SERVER","It hosts websites"],["CLOUD","Where your files live online"],["COFFEE","A developer's fuel"],["PIZZA","Favourite food for late-night coding"],["LAPTOP","A computer you can carry"],["PLANET","Earth is one of them"],["ROCKET","It launches into space"],["MUSIC","You listen to it with headphones"],["WORLD","The whole planet"],["HOUSE","A place where people live"],["WATER","You drink it every day"],["APPLE","A fruit… or a tech brand"],["SPACE","Way above the sky"],["DREAM","It happens while you sleep"],["LIGHT","The opposite of dark"],["SMILE","What your face does when you're happy"],["TRAIN","It runs on rails"],["GARDEN","Where flowers grow"],["WINDOW","You open it for fresh air"],["FRIEND","Someone you trust"],["LEVEL","What you reach in a video game"],["SCORE","Points you get in a game"],["PLAYER","A person in a game"],["DRAGON","A legendary beast that breathes fire"],["CASTLE","A king lives in it"],["JUNGLE","A thick tropical forest"],["TIGER","Big striped cat"],["GUITAR","Instrument with six strings"]]
 };
 const KB={fr:["AZERTYUIOP","QSDFGHJKLM","↵WXCVBN⌫"],en:["QWERTYUIOP","ASDFGHJKL","↵ZXCVBNM⌫"]};
-const W={lang:store.get('ghd-lang','fr'),word:'',hint:'',row:0,cur:'',done:true,rev:new Set(),keys:{},last:'',streak:0,won:false,tries:0,ms:0,t0:0};
+const W={lang:store.get('ghd-lang','fr'),word:'',hint:'',row:0,cur:'',done:true,rev:new Set(),keys:{},last:'',won:false,tries:0,ms:0,t0:0,reveals:0,
+ hintOn:store.get('ghd-whint',true),rounds:store.get('ghd-wrounds',3),round:0,results:[],pts:0,totalMs:0,list:null,over:true};
 const MAXR=6;
-function wordIntro(){showOverlay('MOT MYSTÈRE','Choisis ta langue. Un mot est caché : tu n\'as qu\'un indice pour le trouver !',[['🇫🇷 Français',()=>{setLang('fr')}],['🇬🇧 English',()=>{setLang('en')},true]])}
-function setLang(l){W.lang=l;store.set('ghd-lang',l);newWord()}
-function langBtn(l){hideOverlay();if(mode==='online'){if(net.room&&net.isHost&&net.phase!=='playing'&&net.phase!=='countdown'){W.lang=l;store.set('ghd-lang',l);toast('Langue du salon : '+(l==='fr'?'🇫🇷 Français':'🇬🇧 English'))}else toast('La langue est choisie par le créateur du salon');if(net.phase==='lobby')lobbyOverlay();return}setLang(l)}
-$('#wLangFr').onclick=()=>langBtn('fr');$('#wLangEn').onclick=()=>langBtn('en');
-function newWord(pair){hideOverlay();GH.game.start('word',W.lang+(mode==='online'?'-online':''));const list=WORDS[W.lang];let p=pair;if(!p){do{p=list[Math.random()*list.length|0]}while(p[0]===W.last&&list.length>1)}
- W.word=p[0];W.hint=p[1];W.last=p[0];W.row=0;W.cur='';W.done=false;W.rev=new Set();W.keys={};W.won=false;W.tries=0;W.ms=0;W.t0=Date.now();
- $('#whint').textContent=(W.lang==='fr'?'Indice : ':'Hint: ')+W.hint;renderPattern();
+// Points d'une manche : trouvé au 1er essai = 100, 2e = 90, 3e = 80… 6e = 50, raté = 0 (-10 par lettre révélée)
+function roundPts(won,tries,reveals){return won?Math.max(10,110-10*tries-10*(reveals||0)):0}
+function wSettingsLocked(){return mode==='online'&&net.room&&(!net.isHost||net.phase==='playing'||net.phase==='countdown')}
+function renderWordSettings(){
+ $$('#wHint button').forEach(b=>b.classList.toggle('on',(b.dataset.h==='on')===!!W.hintOn));
+ $$('#wRounds button').forEach(b=>b.classList.toggle('on',+b.dataset.r===+W.rounds));
+ $$('#wLang button').forEach(b=>b.classList.toggle('on',b.dataset.l===W.lang));
+ const lock=wSettingsLocked();$$('#wHint button,#wRounds button,#wLang button').forEach(b=>b.disabled=!!lock||(mode!=='online'&&!W.over));
+ $('#wNote').textContent=lock?'Réglages choisis par le créateur du salon':(mode!=='online'&&!W.over?'Change les réglages entre deux parties':'')}
+function wSetting(fn){if(wSettingsLocked()){toast('Les réglages sont choisis par le créateur du salon');return}fn();renderWordSettings();if(mode==='online'){if(net.phase==='lobby')lobbyOverlay()}else if(W.over)wordIntro()}
+$('#wHint').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled)wSetting(()=>{W.hintOn=b.dataset.h==='on';store.set('ghd-whint',W.hintOn)})});
+$('#wRounds').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled)wSetting(()=>{W.rounds=+b.dataset.r;store.set('ghd-wrounds',W.rounds)})});
+$('#wLang').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled)wSetting(()=>{W.lang=b.dataset.l;store.set('ghd-lang',W.lang)})});
+function wSummary(){return(W.lang==='fr'?'🇫🇷 Français':'🇬🇧 English')+' · '+(W.hintOn?'💡 avec indice':'🔤 sans indice (1re lettre donnée)')+' · '+W.rounds+' manche'+(W.rounds>1?'s':'')+' ('+W.rounds*100+' pts max)'}
+function wordIntro(){W.over=true;renderWordSettings();OG.word.idle();
+ showOverlay('MOT MYSTÈRE',wSummary()+'. Trouvé au 1er essai = 100 pts, 2e = 90 pts… Règle tout ça à droite.',[['▶ JOUER',()=>startWordGame()]])}
+function pickWords(n){const list=WORDS[W.lang],idx=[...list.keys()];for(let i=idx.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[idx[i],idx[j]]=[idx[j],idx[i]]}return idx.slice(0,n)}
+function startWordGame(wis){W.over=false;W.round=0;W.results=[];W.pts=0;W.totalMs=0;W.list=wis||pickWords(W.rounds);setScore(0);renderWordSettings();
+ GH.game.start('word',W.lang+'-'+W.rounds+(W.hintOn?'-hint':'-nohint')+(mode==='online'?'-online':''));nextRound()}
+function nextRound(){const list=WORDS[W.lang];const p=list[W.list[W.round]%list.length];hideOverlay();
+ W.word=p[0];W.hint=p[1];W.last=p[0];W.row=0;W.done=false;W.rev=new Set();W.keys={};W.won=false;W.tries=0;W.ms=0;W.reveals=0;W.t0=Date.now();
+ if(!W.hintOn)W.rev.add(0);
+ $('#wRoundLbl').textContent='MANCHE '+(W.round+1)+' / '+W.list.length+' · '+W.pts+' pts';
+ $('#whint').textContent=W.hintOn?(W.lang==='fr'?'Indice : ':'Hint: ')+W.hint:(W.lang==='fr'?'Sans indice : le mot commence par « '+W.word[0]+' »':'No hint: the word starts with “'+W.word[0]+'”');
+ renderPattern();
  const g=$('#wgrid');g.innerHTML='';for(let r=0;r<MAXR;r++){const row=document.createElement('div');row.className='wrow';for(let c=0;c<W.word.length;c++){const d=document.createElement('div');d.className='wcell';d.innerHTML='<span></span>';row.appendChild(d)}g.appendChild(row)}
- renderKb();wmsg(W.lang==='fr'?'Mot de '+W.word.length+' lettres. À toi !':W.word.length+'-letter word. Go!')}
+ W.cur=W.hintOn?'':W.word[0];drawCur();
+ renderKb();wmsg(W.lang==='fr'?'Mot de '+W.word.length+' lettres. À toi !':W.word.length+'-letter word. Go!');
+ if(mode==='online')OG.word.send()}
 function renderPattern(){$('#wpat').textContent=W.word.split('').map((ch,i)=>W.rev.has(i)?ch:'_').join(' ')}
 function wmsg(t){$('#wmsg').textContent=t}
 function renderKb(){const k=$('#wkbd');k.innerHTML='';KB[W.lang].forEach(line=>{const r=document.createElement('div');r.className='wkrow';[...line].forEach(ch=>{const b=document.createElement('button');b.className='wkey'+(ch==='↵'||ch==='⌫'?' wide':'')+(W.keys[ch]?' '+W.keys[ch]:'');b.textContent=ch==='↵'?'ENTRÉE':ch==='⌫'?'⌫':ch;b.dataset.k=ch;r.appendChild(b)});k.appendChild(r)})}
@@ -1096,9 +1133,10 @@ addEventListener('keydown',e=>{if(game!=='word'||W.done||e.target.closest('input
  if(e.key==='Enter'){e.preventDefault();wordKey('↵')}else if(e.key==='Backspace'){e.preventDefault();wordKey('⌫')}
  else if(e.key.length===1){const l=e.key.normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();if(/^[A-Z]$/.test(l))wordKey(l)}});
 function curRow(){return $('#wgrid').children[W.row]}
-function drawCur(){[...curRow().children].forEach((c,i)=>{c.firstChild.textContent=W.cur[i]||'';c.classList.toggle('filled',!!W.cur[i])})}
+function drawCur(){const r=curRow();if(!r)return;[...r.children].forEach((c,i)=>{c.firstChild.textContent=W.cur[i]||'';c.classList.toggle('filled',!!W.cur[i])})}
 function wordKey(k){if(W.done||!W.word)return;
- if(k==='⌫'){W.cur=W.cur.slice(0,-1);drawCur();return}
+ const minLen=W.hintOn?0:1;
+ if(k==='⌫'){if(W.cur.length>minLen){W.cur=W.cur.slice(0,-1);drawCur()}return}
  if(k==='↵'){submitGuess();return}
  if(W.cur.length<W.word.length){W.cur+=k;drawCur()}}
 function evaluateGuess(guess,word){
@@ -1112,32 +1150,50 @@ function submitGuess(){const row=curRow();
  const res=evaluateGuess(W.cur,W.word);const rank={ok:3,mis:2,no:1};
  [...row.children].forEach((c,i)=>{c.classList.remove('filled');c.style.animationDelay=(i*.12)+'s';c.classList.add(res[i]);const L=W.cur[i];if(!W.keys[L]||rank[res[i]]>rank[W.keys[L]])W.keys[L]=res[i]});
  setTimeout(renderKb,W.word.length*120+200);
- if(W.cur===W.word){W.done=true;W.won=true;W.tries=W.row+1;W.ms=Date.now()-W.t0;W.streak++;const pts=(MAXR-W.row)*10+W.streak*5;setScore(score+pts);saveBest(score);GH.game.end(score);
-  if(mode==='online'){setTimeout(()=>{const r=row.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,40)},W.word.length*120+300);wmsg('🎉 Trouvé en '+W.tries+' essai'+(W.tries>1?'s':'')+' ! En attente des autres…');OG.word.send();netCheck();return}
-  setTimeout(()=>{const r=row.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,40);
-   showOverlay(W.lang==='fr'?'🎉 TROUVÉ !':'🎉 YOU GOT IT!',(W.lang==='fr'?'Le mot était ':'The word was ')+W.word+' · +'+pts+' pts · série : '+W.streak,[[W.lang==='fr'?'▶ Mot suivant':'▶ Next word',()=>newWord()]])},W.word.length*120+500);return}
- W.row++;W.cur='';W.tries=W.row;
- if(W.row>=MAXR){W.done=true;W.won=false;W.ms=Date.now()-W.t0;W.streak=0;GH.game.end(score);shake();
-  if(mode==='online'){wmsg('❌ Le mot était '+W.word+'. En attente des autres…');OG.word.send();netCheck();return}
-  setTimeout(()=>showOverlay(W.lang==='fr'?'PERDU…':'GAME OVER',(W.lang==='fr'?'Le mot caché était : ':'The hidden word was: ')+W.word,[[W.lang==='fr'?'↻ Nouveau mot':'↻ New word',()=>newWord()]]),W.word.length*120+400);return}
+ const anim=W.word.length*120+350;
+ if(W.cur===W.word){W.done=true;W.won=true;W.tries=W.row+1;setTimeout(()=>{const r=row.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,40)},anim);endRound();return}
+ W.row++;W.tries=W.row;
+ if(W.row>=MAXR){W.done=true;W.won=false;shake();endRound();return}
+ W.cur=W.hintOn?'':W.word[0];drawCur();
  if(mode==='online')OG.word.send();
  wmsg((W.lang==='fr'?'Essai ':'Try ')+(W.row+1)+' / '+MAXR)}
-$('#wReveal').onclick=()=>{if(mode==='online'){toast('Pas d\'indice en mode en ligne 😉');return}if(W.done||!W.word)return;const hidden=[...W.word].map((_,i)=>i).filter(i=>!W.rev.has(i));if(hidden.length<=1){toast('Plus d\'indice possible !');return}
- W.rev.add(hidden[Math.random()*hidden.length|0]);renderPattern();setScore(Math.max(0,score-5));toast('💡 Une lettre révélée (-5)')};
+function endRound(){W.ms=Date.now()-W.t0;W.totalMs+=W.ms;const pts=roundPts(W.won,W.tries,W.reveals);W.pts+=pts;W.results.push(pts);W.round++;setScore(W.pts);
+ $('#wRoundLbl').textContent='MANCHE '+W.round+' / '+W.list.length+' · '+W.pts+' pts';
+ const fr=W.lang==='fr';const msg=W.won?(fr?'🎉 Trouvé en '+W.tries+' essai'+(W.tries>1?'s':'')+' : +'+pts+' pts':'🎉 Found in '+W.tries+' : +'+pts+' pts'):(fr?'❌ Le mot était '+W.word+' : 0 pt':'❌ The word was '+W.word+': 0 pt');
+ const last=W.round>=W.list.length;
+ if(mode==='online'){OG.word.send();
+  if(!last){wmsg(msg+(fr?' · Manche suivante…':' · Next round…'));setTimeout(()=>{if(mode==='online'&&net.phase==='playing'&&!W.over)nextRound()},2200);return}
+  W.over=true;GH.game.end(W.pts);saveBest(W.pts);wmsg(msg+(fr?' · 🏁 Terminé ! '+W.pts+' pts. En attente des autres…':' · 🏁 Done! Waiting for the others…'));OG.word.send();netCheck();return}
+ if(!last){setTimeout(()=>showOverlay((fr?'MANCHE ':'ROUND ')+W.round+' / '+W.list.length,msg+' · Total : '+W.pts+' pts',[[fr?'▶ Manche suivante':'▶ Next round',nextRound]]),W.word.length*120+500);return}
+ W.over=true;GH.game.end(W.pts);saveBest(W.pts);renderWordSettings();
+ setTimeout(()=>{const max=W.list.length*100;const good=W.pts>=max*.6;if(W.pts>0)celebrate();
+  showOverlay(good?'🏆 BRAVO !':'🏁 PARTIE TERMINÉE',msg+' · Score final : '+W.pts+' / '+max+' pts ('+W.results.map((p,i)=>'M'+(i+1)+' '+p).join(' · ')+')',[['↻ Rejouer',()=>startWordGame()],['⚙️ Réglages',wordIntro,true]])},W.word.length*120+600)}
+$('#wReveal').onclick=()=>{if(mode==='online'){toast('Pas d\'aide en mode en ligne 😉');return}if(W.done||!W.word)return;const hidden=[...W.word].map((_,i)=>i).filter(i=>!W.rev.has(i));if(hidden.length<=1){toast('Plus de lettre à révéler !');return}
+ W.rev.add(hidden[Math.random()*hidden.length|0]);W.reveals++;renderPattern();toast('💡 Une lettre révélée (-10 pts sur cette manche)')};
 const fmtS=ms=>Math.round((ms||0)/1000)+' s';
 OG.word={allDone:true,
- idle(){W.word='';W.done=true;$('#wgrid').innerHTML='';$('#wkbd').innerHTML='';$('#whint').textContent='';$('#wpat').textContent='';wmsg('')},
- startData(){const list=WORDS[W.lang];return{lang:W.lang,wi:Math.random()*list.length|0}},
- begin(p){const lang=p.lang==='en'?'en':'fr',list=WORDS[lang];const wi=Math.max(0,Math.min(list.length-1,+p.wi|0));W.lang=lang;OG.word.idle();
-  countdown(()=>{newWord(list[wi]);netGo();OG.word.send()})},
- send(){netSend({d:!!W.done,ok:!!W.won,r:W.tries,ms:W.ms})},
- clean(p){return{d:!!p.d,ok:!!p.ok,r:Math.min(6,Math.max(0,+p.r||0)),ms:Math.max(0,+p.ms||0)}},
- myState(){return{d:!!W.done,ok:!!W.won,r:W.tries,ms:W.ms}},
- label(st){return st.d?(st.ok?'✅ '+st.r+' essai'+(st.r>1?'s':'')+' · '+fmtS(st.ms):'❌ raté'):'essai '+Math.min(6,(st.r||0)+1)+'/6'},
- cmp(a,b){return(!!b.ok-!!a.ok)||((a.r||9)-(b.r||9))||((a.ms||1e12)-(b.ms||1e12))},
- winner(w){return!!w.st.ok},noWinner:'PERSONNE N\'A TROUVÉ…',
- prefix(){return(W.lang==='fr'?'Le mot était ':'The word was ')+W.word}
+ idle(){W.word='';W.done=true;$('#wgrid').innerHTML='';$('#wkbd').innerHTML='';$('#whint').textContent='';$('#wpat').textContent='';$('#wRoundLbl').textContent='';wmsg('');renderWordSettings()},
+ startData(){return{lang:W.lang,hint:!!W.hintOn,wis:pickWords(Math.min(5,Math.max(1,+W.rounds||3)))}},
+ begin(p){W.lang=p.lang==='en'?'en':'fr';W.hintOn=!!p.hint;const list=WORDS[W.lang];
+  const wis=(Array.isArray(p.wis)?p.wis:[0]).slice(0,5).map(n=>Math.max(0,Math.min(list.length-1,n|0)));W.rounds=wis.length;OG.word.idle();
+  countdown(()=>{netGo();startWordGame(wis)})},
+ send(){netSend({d:!!W.over&&W.round>=(W.list?W.list.length:1),k:W.round,n:W.list?W.list.length:W.rounds,pts:W.pts,ms:W.totalMs,res:W.results.slice(0,5)})},
+ clean(p){return{d:!!p.d,k:Math.min(5,Math.max(0,+p.k||0)),n:Math.min(5,Math.max(1,+p.n||1)),pts:Math.min(500,Math.max(0,+p.pts||0)),ms:Math.max(0,+p.ms||0),res:Array.isArray(p.res)?p.res.slice(0,5).map(x=>Math.min(100,Math.max(0,+x||0))):[]}},
+ myState(){const n=W.list?W.list.length:W.rounds;return{d:!!W.over&&W.round>=n,k:W.round,n,pts:W.pts,ms:W.totalMs,res:W.results}},
+ label(st){return st.d?'🏁 '+st.pts+' pts':'manche '+Math.min(st.n,(st.k||0)+1)+'/'+st.n+' · '+(st.pts||0)+' pts'},
+ cmp(a,b){return((b.pts||0)-(a.pts||0))||((a.ms||1e12)-(b.ms||1e12))},
+ winner(w){return(w.st.pts||0)>0},noWinner:'PERSONNE N\'A MARQUÉ…',
+ prefix(){return'Classement final ('+(W.list?W.list.length:W.rounds)+' manche'+((W.list?W.list.length:W.rounds)>1?'s':'')+')'}
 };
+
+/* ---- Effet « winner » : pluie de confettis + trophée ---- */
+function celebrate(){const box=$('#overlay');box.classList.add('win');setTimeout(()=>box.classList.remove('win'),4200);
+ const cols=['#39ff88','#ff2ee6','#22f0ff','#ffe14d','#8b5cff','#ff8a3d'];
+ for(let i=0;i<140;i++){const c=document.createElement('div');c.className='confetti';const col=cols[i%cols.length];c.style.background=col;c.style.left=(Math.random()*100)+'vw';
+  c.style.width=c.style.height=(6+Math.random()*8)+'px';if(Math.random()<.4)c.style.borderRadius='50%';document.body.appendChild(c);
+  const dx=(Math.random()-.5)*240,rot=Math.random()*1080,dur=2200+Math.random()*1800,delay=Math.random()*900;
+  c.animate([{transform:'translate(0,-20px) rotate(0)',opacity:1},{transform:`translate(${dx}px,${innerHeight+40}px) rotate(${rot}deg)`,opacity:.9}],{duration:dur,delay,easing:'cubic-bezier(.25,.6,.45,1)',fill:'forwards'}).onfinish=()=>c.remove()}
+ for(let k=0;k<5;k++)setTimeout(()=>burst(innerWidth*(.2+Math.random()*.6),innerHeight*(.25+Math.random()*.4),26),k*260)}
 
 /* ================= BUG SMASH ================= */
 let bugT,bugSpawn,timeLeft=0,bugsDone=false;
