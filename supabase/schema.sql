@@ -11,7 +11,7 @@
 create table if not exists public.admins (
   email text primary key
 );
-insert into public.admins(email) values (lower('ntwaligag@gmail.com'))
+insert into public.admins(email) values (lower('ADMIN_EMAIL_ICI'))
   on conflict do nothing;
 
 create or replace function public.is_admin()

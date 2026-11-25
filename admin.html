@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="icon" href="favicon.ico" sizes="any">
@@ -88,6 +90,7 @@ svg text{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
       <p class="msg" id="loginIntro">Connexion par code envoyé à ton email d'admin.</p>
       <form id="f1" style="display:grid;gap:10px">
         <input type="email" id="em" required placeholder="Ton email d'admin" autocomplete="email">
+        <div id="capAdmin"></div>
         <button type="submit">📨 Recevoir le code</button>
       </form>
       <form id="f2" style="display:none;gap:10px">
@@ -175,8 +178,12 @@ function host(ref){try{return ref?new URL(ref).hostname:'direct'}catch(e){return
 /* ---------- connexion ---------- */
 if(!sb){$('#cfgNote').style.display='block';$('#f1').querySelector('button').disabled=true}
 let loginEmail='';
+const tsKey=(cfg.TURNSTILE_SITE_KEY||'').trim();let capToken=null,capId=null;
+function capReset(){capToken=null;try{window.turnstile&&capId!==null&&turnstile.reset(capId)}catch(e){}}
+if(tsKey){const sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;sc.onload=()=>{capId=turnstile.render('#capAdmin',{sitekey:tsKey,theme:'dark',callback:t=>capToken=t,'expired-callback':()=>capToken=null})};document.head.appendChild(sc)}
 $('#f1').addEventListener('submit',async e=>{e.preventDefault();loginEmail=$('#em').value.trim().toLowerCase();const m=$('#loginMsg');m.className='msg';m.textContent='Envoi…';
- const {error}=await sb.auth.signInWithOtp({email:loginEmail,options:{shouldCreateUser:false}});
+ if(tsKey&&!capToken){m.className='msg err';m.textContent='🤖 Coche d\'abord la vérification anti-robot.';return}
+ const {error}=await sb.auth.signInWithOtp({email:loginEmail,options:Object.assign({shouldCreateUser:false},capToken?{captchaToken:capToken}:{})});capReset();
  if(error){m.className='msg err';m.textContent='✗ '+error.message;return}
  m.className='msg ok';m.textContent='✓ Code envoyé. Regarde ta boîte mail.';$('#f1').style.display='none';$('#f2').style.display='grid';$('#code').focus()});
 $('#f2').addEventListener('submit',async e=>{e.preventDefault();const m=$('#loginMsg');m.className='msg';m.textContent='Vérification…';

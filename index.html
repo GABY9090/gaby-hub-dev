@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -420,7 +422,7 @@ body.upside{transform:rotate(180deg);transition:transform 1s}
     <div class="rag"><div class="hd"><span>● rag-assistant — démo animée</span><span>simulation</span></div><div id="ragOut"></div></div>
   </div>
   <div class="stats">
-    <div class="card stat"><b data-to="10">0</b><span>projets</span></div>
+    <div class="card stat"><b data-to="11">0</b><span>projets</span></div>
     <div class="card stat"><b data-to="7">0</b><span>langages de programmation</span></div>
     <div class="card stat"><b data-to="4">0</b><span>jeux jouables ici</span></div>
     <div class="card stat"><b data-to="1">0</b><span>entreprise créée (2025)</span></div>
@@ -476,7 +478,8 @@ body.upside{transform:rotate(180deg);transition:transform 1s}
       <p class="profile">Étudiant en Master 2 Bases de Données et Intelligence Artificielle à l'Université Bourgogne Europe, je maîtrise Python, SQL et le traitement de données, et je mène un projet de bout en bout : collecte et préparation des données, API, interface web, conteneurisation. Attiré par l'IA (Machine Learning, Deep Learning, RAG, LLM), je cherche un stage de fin d'études pour concevoir et intégrer des solutions intelligentes qui répondent à des problèmes concrets.</p>
       <h4>// EXPÉRIENCES &amp; PROJETS</h4>
       <div class="row"><b>IA générative pour la vie universitaire (RAG)</b><span>Université Bourgogne Europe · 2026, en cours</span></div>
-      <div class="row"><b>Développeur Full-Stack — Rukundo Trans</b><span>SAS de transport et déménagement · juillet – août 2026</span></div>
+      <div class="row"><b>NtwaliHub Studio — génération de vidéos par IA</b><span>Projet perso · 2026 · studio.ntwalihub.com</span></div>
+      <div class="row"><b>Développeur Full-Stack — Rukundo Trans</b><span>SAS de transport et déménagement · juillet – août 2026 · site vitrine + assistant IA</span></div>
       <div class="row"><b>Météosphère — application de données climatiques</b><span>Université Bourgogne Europe · 2025 – 2026</span></div>
       <div class="row"><b>Auto-entrepreneur — Programmation informatique</b><span>Depuis février 2025</span></div>
       <div class="row"><b>Autres projets</b><span>Crypto (chiffrement / déchiffrement) · Téléchargeur automatique Java multi-thread · Gestion d'animalerie (UML + MVC)</span></div>
@@ -596,7 +599,8 @@ body.upside{transform:rotate(180deg);transition:transform 1s}
         <input class="f" required placeholder="Ton nom" name="n">
         <input class="f" required type="email" placeholder="Ton email" name="e">
         <textarea class="f" required rows="5" placeholder="Ton message…" name="m"></textarea>
-        <button class="btn magnet" type="submit">🚀 Préparer le message</button>
+        <div id="capContact"></div>
+        <button class="btn magnet" type="submit">🚀 Envoyer le message</button>
         <div class="okmsg" id="sent"></div>
       </form>
     </div>
@@ -631,6 +635,7 @@ body.upside{transform:rotate(180deg);transition:transform 1s}
       <form class="lockform" id="signForm">
         <input class="f" required name="n" maxlength="40" placeholder="Ton pseudo">
         <input class="f" required type="email" name="e" placeholder="Ton email">
+        <div id="capSign"></div>
         <button class="btn magnet" type="submit">📨 Recevoir mon code d'accès</button>
       </form>
       <div class="okmsg" id="signOut"></div>
@@ -653,14 +658,16 @@ body.upside{transform:rotate(180deg);transition:transform 1s}
 <script src="js/config.js"></script>
 <script src="js/gh.js"></script>
 <script>
-window.GH=window.GH||{ready:false,page(){},game:{start(){},score(){},end(){}},hub:{async session(){return null},async sendCode(){return{error:{message:"Supabase non configuré"}}},async verify(){return{error:{message:"Supabase non configuré"}}},logView(){},async signOut(){}},async joinRoom(){throw{code:"non_configure"}},async contact(){return{error:{message:"off"}}}};
+window.GH=window.GH||{ready:false,captcha:{enabled:false,async mount(){return null}},page(){},game:{start(){},score(){},end(){}},hub:{async session(){return null},async sendCode(){return{error:{message:"Supabase non configuré"}}},async verify(){return{error:{message:"Supabase non configuré"}}},logView(){},async signOut(){}},async joinRoom(){throw{code:"non_configure"}},async contact(){return{error:{message:"off"}}}};
 /* ================= DONNÉES ================= */
 const OWNER_EMAIL="ntwaligag@gmail.com";
 const PROJECTS=[
  {t:"Assistant IA pour la vie universitaire",e:"🤖",c:"ia",w:"2026 · en cours",where:"Université Bourgogne Europe · RAG",d:"Un assistant qui répond aux questions des étudiants à partir des documents officiels de l'université, en citant ses sources pour limiter les hallucinations du LLM.",
   pts:["Ingestion et nettoyage des documents publics","Chunking, embeddings et stockage PostgreSQL + pgvector","Chaîne RAG : recherche vectorielle → prompt → réponse sourcée","API REST FastAPI + app web/mobile React, services Docker"],tags:["Python","FastAPI","React","pgvector","RAG","LLM","Docker"],bg:"linear-gradient(135deg,#8b5cff,#22f0ff)"},
- {t:"Site vitrine Rukundo Trans",e:"🚚",c:"web",w:"Juil. – août 2026",where:"Développeur Full-Stack · SAS transport & déménagement",d:"Le site de l'entreprise, avec demande de devis en ligne et référencement local pour attirer des clients de la région.",
-  pts:["Arborescence et UI responsive mobile first","Composants React, formulaires validés côté client","Traitement des demandes côté serveur en Node.js","SEO local et mise en production"],tags:["React","Node.js","HTML/CSS","SEO local"],bg:"linear-gradient(135deg,#ff9f1c,#ff2ee6)"},
+ {t:"NtwaliHub Studio : vidéos par IA",e:"🎬",c:"ia",w:"2026",where:"Projet perso · IA générative",url:"https://studio.ntwalihub.com",d:"Une plateforme où l'on écrit ce qu'on veut voir, et l'IA génère la vidéo. Pensée pour les créateurs, les étudiants et les entreprises.",
+  pts:["Génération de vidéos à partir d'un texte (prompt)","Création de compte et connexion des utilisateurs","2 vidéos offertes à l'inscription","En ligne sur studio.ntwalihub.com"],tags:["IA générative","Vidéo","Web app","Comptes utilisateurs"],bg:"linear-gradient(135deg,#ff2ee6,#22f0ff)"},
+ {t:"Site vitrine Rukundo Trans",e:"🚚",c:"web",w:"Juil. – août 2026",where:"Développeur Full-Stack · SAS transport & déménagement",d:"Le site de l'entreprise, avec demande de devis en ligne, un assistant IA qui répond aux questions des visiteurs et un référencement local pour attirer des clients de la région.",
+  pts:["Arborescence et UI responsive mobile first","Composants React, formulaires validés côté client","Assistant IA pour répondre aux questions des clients","Traitement des demandes côté serveur en Node.js","SEO local et mise en production"],tags:["React","Node.js","Assistant IA","HTML/CSS","SEO local"],bg:"linear-gradient(135deg,#ff9f1c,#ff2ee6)"},
  {t:"Météosphère",e:"🌦️",c:"ia",w:"2025 – 2026",where:"Université Bourgogne Europe · Data full-stack",d:"Application de visualisation des données climatiques de Météo-France, pensée pour des utilisateurs non techniques, de la donnée brute au tableau de bord.",
   pts:["Pipeline ETL Python / pandas","Modèle relationnel PostgreSQL + PostGIS","API Spring Boot MVC sécurisée par JWT","Front Angular avec carte interactive + dashboard Power BI"],tags:["Python","pandas","Spring Boot","Angular","PostGIS","JWT","Power BI","Docker"],bg:"linear-gradient(135deg,#0ea5e9,#39ff88)"},
  {t:"Gaby Hub Dev",e:"🚀",c:"web",w:"2026",where:"Projet perso",d:"Ce site ! Un hub néon avec portfolio, CV interactif, arcade de jeux, multijoueur et un labo d'effets crazy.",pts:[],tags:["HTML","CSS","JavaScript","Canvas"],bg:"linear-gradient(135deg,#8b5cff,#ff2ee6)"},
@@ -677,7 +684,8 @@ const PROJECTS=[
 const CATS={all:"Tout",ia:"IA & Data",web:"Web",soft:"Java, Réseaux & Sécu",jeu:"Jeux"};
 const TIMELINE=[
  {w:"Prochaine étape",t:"🎯 Stage de fin d'études",d:"Je cherche un stage en Data & IA pour concevoir et intégrer des solutions intelligentes.",next:true},
- {w:"Juil. – août 2026",t:"Développeur Full-Stack · Rukundo Trans",d:"Site vitrine React / Node.js, devis en ligne, SEO local, mise en production."},
+ {w:"2026",t:"NtwaliHub Studio",d:"Ma plateforme de génération de vidéos par IA : studio.ntwalihub.com."},
+ {w:"Juil. – août 2026",t:"Développeur Full-Stack · Rukundo Trans",d:"Site vitrine React / Node.js, devis en ligne, assistant IA pour les questions des clients, SEO local, mise en production."},
  {w:"2026 · en cours",t:"Assistant IA RAG · Université Bourgogne Europe",d:"pgvector, embeddings, FastAPI, React, Docker."},
  {w:"2025 – 2027",t:"Master Bases de Données & IA",d:"Université de Bourgogne · M1 validé, M2 en cours."},
  {w:"2025 – 2026",t:"Météosphère",d:"ETL Python, PostGIS, Spring Boot + JWT, Angular, Power BI."},
@@ -694,7 +702,7 @@ const SKILLS={
  "Méthodes & outils":["UML","MVC","Git","Docker","Excel","PowerPoint"]
 };
 const TAGLINE=["La technologie n'a pas de limites…","Coder • Apprendre • Innover.","Ici, on code, on joue, on fait parler les données…","et parfois, on fait planter des serveurs 😈","Data, IA, full-stack… et des jeux."];
-const TERM=[["Entraînement de l'assistant RAG…","✓"],["Déploiement de Gaby Hub Dev…","✓"],["Chiffrement des messages secrets…","🔐"],["Recherche de stage de fin d'études…","⟳"],["Nouveau record au Snake…","🏆"]];
+const TERM=[["Entraînement de l'assistant RAG…","✓"],["Déploiement de Gaby Hub Dev…","✓"],["Génération de vidéos sur NtwaliHub Studio…","🎬"],["Chiffrement des messages secrets…","🔐"],["Recherche de stage de fin d'études…","⟳"],["Nouveau record au Snake…","🏆"]];
 
 /* ================= UTILS ================= */
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -714,6 +722,7 @@ function route(){
   window.scrollTo({top:0,behavior:'instant'});
   if(v==='cv')animateCV();
   GH.page(v);
+  if(v==='contact')GH.captcha.mount($('#capContact'));
   if(v!=='gaming')pauseGames(true);
 }
 addEventListener('hashchange',route);
@@ -785,7 +794,7 @@ const RAGQ=[
 /* ================= PORTFOLIO ================= */
 let cat='all';
 function renderFilters(){$('#filters').innerHTML=Object.entries(CATS).map(([k,v])=>`<button class="${k===cat?'on':''}" data-c="${k}">${v}</button>`).join('')}
-function renderProjects(){$('#projects').innerHTML=PROJECTS.filter(p=>cat==='all'||p.c===cat).map(p=>`<div class="card proj tilt"><div class="thumb" style="background:${p.bg}"><span class="when">${p.w}</span>${p.e}</div><div class="body"><div class="where">${p.where}</div><h3>${p.t}</h3><p>${p.d}</p>${p.pts.length?`<ul>${p.pts.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}<div class="tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>${p.game?`<div class="acts"><a href="#gaming" data-play="${p.game}">▶ Jouer</a><button data-code="${p.game}">🔒 Voir le code</button></div>`:''}</div></div>`).join('');bindFx()}
+function renderProjects(){$('#projects').innerHTML=PROJECTS.filter(p=>cat==='all'||p.c===cat).map(p=>`<div class="card proj tilt"><div class="thumb" style="background:${p.bg}"><span class="when">${p.w}</span>${p.e}</div><div class="body"><div class="where">${p.where}</div><h3>${p.t}</h3><p>${p.d}</p>${p.pts.length?`<ul>${p.pts.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}<div class="tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>${p.game?`<div class="acts"><a href="#gaming" data-play="${p.game}">▶ Jouer</a><button data-code="${p.game}">🔒 Voir le code</button></div>`:''}${p.url?`<div class="acts"><a href="${p.url}" target="_blank" rel="noopener">🔗 Voir le site</a></div>`:''}</div></div>`).join('');bindFx()}
 $('#filters').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cat=b.dataset.c;renderFilters();renderProjects()});
 $('#projects').addEventListener('click',e=>{const a=e.target.closest('[data-play]');if(a)setTimeout(()=>selectGame(a.dataset.play),50);const c=e.target.closest('[data-code]');if(c)openLock(c.dataset.code)});
 renderFilters();renderProjects();
@@ -1180,7 +1189,7 @@ function showMember(email){$('#lockForms').style.display='none';const m=$('#memb
 async function openLock(g){lockGame=g;const src=SOURCES[g]();const pre=$('#lockCode');$('#lockTitle').textContent='// code source de '+NAMES[g];
  clearInterval(scrT);$('#signOut').textContent='';$('#unlockErr').textContent='';$('#memberBar').style.display='none';$('#lockForms').style.display='block';
  pre.classList.add('locked');scrT=setInterval(()=>{pre.textContent=scrambleText(src,0)},90);
- $('#lock').classList.add('on');bindFx();
+ $('#lock').classList.add('on');bindFx();GH.captcha.mount($('#capSign'));
  const s=await GH.hub.session();
  if(s&&s.user){revealCode(false);showMember(s.user.email);GH.hub.logView(g)}
  else if(!GH.ready){$('#signOut').textContent='GabyCodeHub sera bientôt ouvert : l\'inscription n\'est pas encore activée sur ce site.'}}
@@ -1189,8 +1198,9 @@ $('#lockX').onclick=closeLock;$('#lock').addEventListener('click',e=>{if(e.targe
 function lockTab(t){$$('.ltabs button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));$$('.lpanel').forEach(p=>p.classList.toggle('on',p.id==='p-'+t))}
 $$('.ltabs button').forEach(b=>b.onclick=()=>lockTab(b.dataset.t));
 $('#signForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.target,btn=f.querySelector('button'),out=$('#signOut');const n=f.n.value.trim(),em=f.e.value.trim().toLowerCase();
+ const cap=await GH.captcha.mount($('#capSign'));if(GH.captcha.enabled&&(!cap||!cap.token)){out.style.color='var(--red)';out.textContent='🤖 Coche d\'abord la vérification anti-robot.';return}
  btn.disabled=true;out.style.color='';out.textContent='Envoi du code…';
- const {error}=await GH.hub.sendCode(em,n,lockGame);btn.disabled=false;
+ const {error}=await GH.hub.sendCode(em,n,lockGame,cap&&cap.token);btn.disabled=false;if(cap)cap.reset();
  if(error){out.style.color='var(--red)';out.textContent='✗ '+(/rate|limit|seconds/i.test(error.message||'')?'Trop de demandes, réessaie dans une minute.':(error.message||'Erreur, réessaie.'));return}
  out.textContent='';$('#unlockForm').e.value=em;lockTab('have');$('#unlockErr').style.color='var(--green)';$('#unlockErr').textContent='✓ Code envoyé à '+em+' ! Regarde ta boîte mail (et les spams).';burst(innerWidth/2,innerHeight/2,24)});
 $('#unlockForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.target,btn=f.querySelector('button'),err=$('#unlockErr');const em=f.e.value.trim().toLowerCase(),c=f.c.value.replace(/\s/g,'');
@@ -1224,7 +1234,8 @@ addEventListener('keydown',e=>{if(game==='word'&&location.hash==='#gaming')retur
 
 /* ================= CONTACT ================= */
 $('#form').addEventListener('submit',async e=>{e.preventDefault();const f=e.target;const n=f.n.value.trim(),em=f.e.value.trim(),m=f.m.value.trim();const s=$('#sent');const btn=f.querySelector('button[type=submit]');
- if(GH.ready){btn.disabled=true;s.textContent='Envoi…';const {error}=await GH.contact(n,em,m);btn.disabled=false;
+ if(GH.ready){const cap=await GH.captcha.mount($('#capContact'));if(GH.captcha.enabled&&(!cap||!cap.token)){s.textContent='🤖 Coche d\'abord la vérification anti-robot.';return}
+  btn.disabled=true;s.textContent='Envoi…';const {error}=await GH.contact(n,em,m);btn.disabled=false;if(cap)cap.reset();
   if(!error){s.textContent='✓ Merci '+n+' ! Ton message est bien arrivé, je te réponds vite.';f.reset();burst(innerWidth/2,innerHeight/2,30);return}}
  const subject='Contact Gaby Hub Dev — '+n;const body=m+'\n\n— '+n+' ('+em+')';const link='mailto:'+OWNER_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
  s.innerHTML=`Merci ${esc(n)} ! <a href="${link}">Ouvre ton email pour l'envoyer</a>, ou copie le message et envoie-le à <b>${OWNER_EMAIL}</b>.<br><button class="btn alt sm" type="button" id="cpMsg" style="margin-top:10px">📋 Copier le message</button>`;

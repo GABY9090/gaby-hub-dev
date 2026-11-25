@@ -7,5 +7,8 @@
 // =====================================================================
 window.GH_CONFIG = {
   SUPABASE_URL: "https://rwsxphmigggkdzcvcdza.supabase.co",
-  SUPABASE_ANON_KEY: "sb_publishable_OjOVTpuQa6brAIpsDRMC7g_Pwb4YLkf"
+  SUPABASE_ANON_KEY: "sb_publishable_OjOVTpuQa6brAIpsDRMC7g_Pwb4YLkf",
+  // Anti-robot Cloudflare Turnstile (facultatif) : colle ici la "Site Key"
+  // (Cloudflare > Turnstile). Laisse "" pour désactiver.
+  TURNSTILE_SITE_KEY: ""
 };

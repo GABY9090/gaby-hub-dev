@@ -113,9 +113,9 @@
   /* ---- GabyCodeHub : code d'accès envoyé automatiquement par email ---- */
   const hub = {
     async session() { if (!sb) return null; try { const { data } = await sb.auth.getSession(); return data.session; } catch (e) { return null; } },
-    async sendCode(email, pseudo, gameName) {
+    async sendCode(email, pseudo, gameName, captchaToken) {
       if (!sb) return { error: { message: 'Le site n\'est pas encore relié à Supabase.' } };
-      const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, data: { pseudo } } });
+      const { error } = await sb.auth.signInWithOtp({ email, options: Object.assign({ shouldCreateUser: true, data: { pseudo } }, captchaToken ? { captchaToken } : {}) });
       rpc('request_access', { p_email: email, p_pseudo: pseudo, p_game: gameName, p_status: error ? 'erreur' : 'envoye' });
       return { error };
     },
@@ -129,7 +129,35 @@
     async signOut() { if (sb) await sb.auth.signOut(); }
   };
 
+  /* ---- Anti-robot (Cloudflare Turnstile) ---- */
+  const tsKey = (cfg.TURNSTILE_SITE_KEY || '').trim();
+  let tsLoad = null;
+  function loadTurnstile() {
+    if (!tsKey) return Promise.resolve(null);
+    if (window.turnstile) return Promise.resolve(window.turnstile);
+    if (!tsLoad) tsLoad = new Promise(res => {
+      const s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      s.async = true; s.onload = () => res(window.turnstile || null); s.onerror = () => res(null);
+      document.head.appendChild(s);
+    });
+    return tsLoad;
+  }
+  const captcha = {
+    enabled: !!tsKey,
+    async mount(el) {
+      if (!tsKey || !el) return null;
+      if (el._cap) return el._cap;
+      const ts = await loadTurnstile(); if (!ts) return null;
+      const cap = { token: null };
+      cap.id = ts.render(el, { sitekey: tsKey, theme: 'dark', callback: t => { cap.token = t; }, 'expired-callback': () => { cap.token = null; }, 'error-callback': () => { cap.token = null; } });
+      cap.reset = () => { cap.token = null; try { ts.reset(cap.id); } catch (e) {} };
+      el._cap = cap; return cap;
+    }
+  };
+
   window.GH = {
+    captcha,
     ready: !!sb, sb, page, game, joinRoom, hub,
     contact: (name, email, message) => rpc('send_contact', { p_name: name, p_email: email, p_message: message })
   };
